@@ -26,7 +26,11 @@ Last updated: 2026-07-19 (Step 1 review follow-up complete)
 7. Drop rows with missing `NARRATIVE`: 10 removed (needed for retrieval index).
 8. Drop rows with `DEGREE_INJURY_CD` `00` (accident only): 1 removed. Singleton class cannot be learned or evaluated.
 
-**Split:** 80/20 stratified on `DEGREE_INJURY_CD` plus five-year calendar buckets. Strata with fewer than two records are collapsed for split assignment only (original labels unchanged).
+**Split:** 80/20 stratified on `DEGREE_INJURY_CD` plus calendar year buckets (mostly five-year spans; final bucket 2020 to 2026). Strata with fewer than two records are collapsed for split assignment only (original labels unchanged).
+
+**Test split class coverage (verified 2026-07-19):** All ten target classes (01 to 10) appear in the held-out test set. Counts: 01=240, 02=491, 03=17,514, 04=4,102, 05=8,620, 06=14,223, 07=2,108, 08=307, 09=114, 10=409.
+
+**Note on degree-00 reporting:** An earlier PROGRESS draft listed code 00 with count 1 from a run before step 8 (degree exclusion) was added. Current code and `ingestion_summary.json` agree: code 00 is absent; cleaned count is 240,640.
 
 **Summary statistics (verified from `data/processed/ingestion_summary.json` after review follow-up re-ingest):**
 | Stage | Rows |
@@ -81,6 +85,8 @@ Explicitly excluded from inputs (`CLASSIFIER_LEAKAGE_COLUMNS`):
 - `NARRATIVE`, `DOCUMENT_NO`, `CLOSED_DOC_NO` (retrieval or identifiers, not classifier inputs)
 
 Target: `DEGREE_INJURY_CD` (codes 01 to 10).
+
+Step 2 must select inputs via `src/data/features.py` (`select_classifier_features`). Do not use `frame.drop(columns=[target])` on the full cleaned dataframe.
 
 **4. Temporal split:** Primary evaluation keeps the current 80/20 random stratified split for comparability with prior MSHA studies. Step 2 will add an out-of-time robustness check: train on 2000 to 2020, test on 2021 onward (`OUT_OF_TIME_TRAIN_MAX_YEAR` / `OUT_OF_TIME_TEST_MIN_YEAR` in config).
 

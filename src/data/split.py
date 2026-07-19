@@ -9,7 +9,7 @@ from src.data.config import CLASSIFIER_TARGET_COLUMN, RANDOM_SEED, TEST_FRACTION
 
 
 def _year_bucket(year: int) -> str:
-    """Group calendar years into five-year buckets for stratification."""
+    """Group calendar years into buckets for stratification (mostly five-year spans)."""
     if year < 2005:
         return "2000-2004"
     if year < 2010:
@@ -18,7 +18,7 @@ def _year_bucket(year: int) -> str:
         return "2010-2014"
     if year < 2020:
         return "2015-2019"
-    return "2020-2026"
+    return "2020-2026"  # seven calendar years; 2026 is partial in the current extract
 
 
 def make_stratify_label(frame: pd.DataFrame) -> pd.Series:
@@ -26,6 +26,7 @@ def make_stratify_label(frame: pd.DataFrame) -> pd.Series:
     Build a combined stratification label from injury degree and calendar year bucket.
 
     Injury degree captures class balance. Year bucket preserves temporal coverage in both splits.
+    Buckets are mostly five-year spans; the final bucket (2020 to 2026) is seven years.
     """
     buckets = frame["CAL_YR"].map(_year_bucket)
     return frame[CLASSIFIER_TARGET_COLUMN].astype(str) + "_" + buckets.astype(str)

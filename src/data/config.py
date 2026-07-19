@@ -66,6 +66,15 @@ CLASSIFIER_LEAKAGE_COLUMNS = [
     "CLOSED_DOC_NO",
 ]
 
+# Optional mine context features for classifier ablation studies (Step 2).
+CLASSIFIER_MINE_FEATURE_COLUMNS = [
+    "CURRENT_MINE_TYPE",
+    "CURRENT_MINE_STATUS",
+    "PRIMARY_CANVASS",
+    "NO_EMPLOYEES",
+    "STATE",
+]
+
 # Out-of-time evaluation split for Step 2 robustness check (train through 2020, test 2021 onward).
 OUT_OF_TIME_TRAIN_MAX_YEAR = 2020
 OUT_OF_TIME_TEST_MIN_YEAR = 2021

@@ -163,6 +163,35 @@ def test_cleaning_synthetic_hand_computed_counts() -> None:
     assert removed_excluded["rows_removed"] == 1
 
 
+def test_cleaned_data_has_no_degree_zero(raw_accidents: pd.DataFrame) -> None:
+    cleaned, _ = clean_accidents(raw_accidents)
+    assert "00" not in set(cleaned["DEGREE_INJURY_CD"].astype(str).str.zfill(2))
+
+
+def test_test_split_contains_all_ten_target_classes() -> None:
+    if not TEST_CSV.exists():
+        pytest.skip("Run python -m src.data.ingest first")
+    test = pd.read_csv(TEST_CSV, usecols=["DEGREE_INJURY_CD"], low_memory=False)
+    codes = set(test["DEGREE_INJURY_CD"].astype(str).str.zfill(2))
+    expected = {f"{i:02d}" for i in range(1, 11)}
+    assert codes == expected, f"Missing from test split: {expected - codes}"
+    # Sanity: rare classes still have workable test counts
+    counts = test["DEGREE_INJURY_CD"].astype(str).str.zfill(2).value_counts()
+    assert counts["01"] >= 100
+    assert counts["09"] >= 50
+
+
+def test_select_classifier_features_excludes_leakage_columns(raw_accidents: pd.DataFrame) -> None:
+    from src.data.features import select_classifier_features
+
+    cleaned, _ = clean_accidents(raw_accidents)
+    features = select_classifier_features(cleaned.head(100))
+    assert "DAYS_LOST" not in features.columns
+    assert "DAYS_RESTRICT" not in features.columns
+    assert "DEGREE_INJURY_CD" not in features.columns
+    assert "NARRATIVE" not in features.columns
+
+
 def test_ingestion_pipeline_outputs_exist_after_run() -> None:
     """Verify processed artifacts if the full ingest script has been run."""
     if not TRAIN_CSV.exists():
