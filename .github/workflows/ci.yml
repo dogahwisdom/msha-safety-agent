@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Cache raw MSHA downloads
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: msha-raw-${{ hashFiles('src/data/config.py') }}
+
+      - name: Run data ingestion
+        run: python -m src.data.ingest
+
+      - name: Run tests
+        run: pytest tests/ -v
