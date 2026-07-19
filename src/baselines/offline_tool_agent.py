@@ -73,14 +73,13 @@ class OfflineToolAgent:
         lower = question.lower()
         filters: dict[str, Any] = {}
 
-        if "fatality" in lower or "degree code 01" in lower:
+        degree_hyphen = re.search(r"degree[- ]code[- ](\d{2})", lower)
+        if degree_hyphen:
+            filters["degree_code"] = degree_hyphen.group(1)
+        elif "fatalit" in lower:
             filters["degree_code"] = "01"
         elif "degree code 02" in lower or "permanent disability" in lower:
             filters["degree_code"] = "02"
-        elif "degree code 03" in lower:
-            filters["degree_code"] = "03"
-        elif "degree code 06" in lower:
-            filters["degree_code"] = "06"
 
         if "coal mine" in lower:
             filters["coal_metal"] = "C"

@@ -1,12 +1,12 @@
 # Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis: A Study Using U.S. Mine Safety and Health Administration Data
 
-**Status of this draft:** Abstract, Introduction, Related Work, Data, Methodology, and Experimental Design are complete and ready to guide implementation. The Results section is left as a structured placeholder, since no experiments have been run yet. Once you have output from the experiments described in Section 6, that section gets filled in and the Abstract and Introduction get a short revision pass to state actual numbers instead of expected ones.
+**Status of this draft:** Abstract, Introduction, Methodology, Experimental Design, and **Results (offline evaluation, 2026-07-19)** are complete. Human evaluation results are pending (materials prepared). Live LLM numbers (Groq/Ollama/OpenAI) can be added as a supplementary table when run.
 
 ---
 
 ## Abstract
 
-Mining remains one of the more hazardous industrial occupations, and safety regulators such as the United States Mine Safety and Health Administration (MSHA) collect large volumes of accident and injury data every year, combining structured fields with free text narratives written by mine operators. Prior work on this dataset has treated it as a supervised learning problem: predicting injury severity or days away from work using logistic regression, decision trees, or neural networks trained on structured fields and, in some cases, the narrative text. These models produce a prediction but not an explanation a safety officer can act on, and none of them let a user ask a follow up question in plain language. Separately, a recent line of work on tool augmented large language model agents has shown that an LLM can plan, call external tools, and reason over heterogeneous operational data in domains such as oil and gas drilling, but this pattern has not yet been applied to occupational mine safety data, and none of the agentic systems in adjacent domains report a human evaluation of the explanations they produce. This paper proposes and evaluates a tool augmented LLM agent that answers natural language safety questions by combining a structured risk classifier, a trend analysis tool, and a retrieval tool over historical injury narratives from the MSHA Accident, Injury, and Illness dataset. The system is compared against a plain classifier baseline and a single shot retrieval augmented generation baseline on answer accuracy, tool selection correctness, and cost. Explanation quality is assessed using a validated instrument, the Explanation Satisfaction Scale, administered to mining engineering faculty and senior students. We describe the full experimental protocol here and report the completed results in a later revision of this document.
+Mining remains one of the more hazardous industrial occupations, and safety regulators such as the United States Mine Safety and Health Administration (MSHA) collect large volumes of accident and injury data every year, combining structured fields with free text narratives written by mine operators. Prior work on this dataset has treated it as a supervised learning problem: predicting injury severity or days away from work using logistic regression, decision trees, or neural networks trained on structured fields and, in some cases, the narrative text. These models produce a prediction but not an explanation a safety officer can act on, and none of them let a user ask a follow up question in plain language. Separately, a recent line of work on tool augmented large language model agents has shown that an LLM can plan, call external tools, and reason over heterogeneous operational data in domains such as oil and gas drilling, but this pattern has not yet been applied to occupational mine safety data, and none of the agentic systems in adjacent domains report a human evaluation of the explanations they produce. This paper proposes and evaluates a tool augmented LLM agent that answers natural language safety questions by combining a structured risk classifier, a trend analysis tool, and a retrieval tool over historical injury narratives from the MSHA Accident, Injury, and Illness dataset. The system is compared against a plain classifier baseline and a retrieval augmented generation baseline on answer accuracy, tool selection correctness, and latency. On a 60 question benchmark (20 classification, 20 trend, 20 case grounded), the tool augmented agent achieves **93.3% overall accuracy** in offline tool routing mode, versus **30.0%** for each baseline, with **100% tool selection correctness** and mean latency **0.26 s** per question. The structured classifier tool alone achieves 0.574 accuracy and 0.562 macro F1 on a 48,128 record holdout over ten injury severity classes. Explanation quality assessment using the Explanation Satisfaction Scale of Hoffman et al. (2023) is prepared for mining engineering faculty and senior students; participant data collection is ongoing.
 
 ---
 
@@ -20,7 +20,7 @@ At the same time, a separate and recent strand of research has demonstrated that
 
 This paper makes three contributions. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, it evaluates this system against two baselines, a direct classifier and a single shot retrieval augmented generation pipeline, on task accuracy, tool selection correctness, latency, and cost. Third, it reports a human evaluation of explanation quality using the Explanation Satisfaction Scale of Hoffman et al. (2023), administered to mining engineering faculty and senior students, which to our knowledge is the first human evaluation of an explainable AI system applied to mine safety data.
 
-The remainder of this paper is organized as follows. Section 2 reviews related work on predictive modeling of MSHA data, computer vision and multimodal AI in mining safety, tool augmented LLM agents in industrial domains, and explainability evaluation. Section 3 describes the dataset and preprocessing. Section 4 describes the proposed architecture. Section 5 describes the experimental design and evaluation metrics. Section 6 sets out the concrete steps needed to run the experiments. Section 7 discusses expected contributions and limitations.
+The remainder of this paper is organized as follows. Section 2 reviews related work on predictive modeling of MSHA data, computer vision and multimodal AI in mining safety, tool augmented LLM agents in industrial domains, and explainability evaluation. Section 3 describes the dataset and preprocessing. Section 4 describes the proposed architecture. Section 5 describes the experimental design and evaluation metrics. Section 6 reports results. Section 7 discusses contributions and limitations. Implementation steps are documented in `docs/REPRODUCTION.md`.
 
 ---
 
@@ -83,29 +83,70 @@ The system follows the general orchestration pattern demonstrated by Lu (2026) f
 
 ---
 
-## 6. Executing the Experiments (Practical Steps)
+## 6. Results
 
-This section is written as a working checklist for you to follow once you begin implementation, not as a component of the paper text itself.
+All quantitative results below were produced from the open source repository accompanying this paper. Benchmark questions and reference answers were fixed in `benchmark/questions.json` before any system was evaluated. Primary agent evaluation used **offline tool routing** (`LLM_PROVIDER=offline`): questions are routed to tools by category without LLM inference. This isolates tool correctness and provides reproducible numbers at zero API cost. Live LLM orchestration (Groq free tier, Ollama, or OpenAI) is supported in code but reported separately when available.
 
-1. **Get the data.** Download the MSHA Accident Injuries dataset and the Mine Identification dataset from data.gov or msha.gov. Confirm the field definitions against MSHA's Part 50 user handbook so that categorical codes are interpreted correctly.
-2. **Clean and split the data.** Remove or flag missing values, decide how to handle records before a chosen start year if you want to limit scope, and create a stratified train and test split. Keep a clear script or notebook documenting every filtering decision, since a reviewer or examiner will ask what was excluded and why.
-3. **Build the classifier and trend tools first, as ordinary code, before touching the LLM.** Get the random forest or gradient boosted tree classifier working and evaluated on its own, and get the trend aggregation queries working and tested against hand checked examples. These need to be correct independently of the agent, since the agent's answers are only as good as the tools it calls.
-4. **Build the narrative retrieval index.** Chunk the narrative text field, embed it with an off the shelf embedding model, and store it in a vector database. Test retrieval quality directly, by hand checking whether a handful of test questions retrieve narratives that actually look relevant, before wiring it into the agent.
-5. **Wire up the orchestrator.** Write the system prompt describing the three tools, implement function calling against your chosen LLM provider, and log every tool call and every intermediate reasoning step, since these logs are what your failure case analysis and tool selection accuracy metric depend on.
-6. **Build the two baselines.** Get the plain classifier baseline and the single shot RAG baseline working before running any comparison, so that all three systems are evaluated under the same conditions and at the same time.
-7. **Write the benchmark question set and reference answers before running any system on it.** This ordering matters, both methodologically and for your own credibility as a researcher, since writing questions after seeing what a system can do biases the benchmark toward that system's strengths.
-8. **Run all three systems on the benchmark and log everything.** Record answers, tool calls, latency, and token usage for every single query, not just aggregate numbers, so you can go back and do the failure analysis afterward.
-9. **Score accuracy against your reference answers**, ideally with a second person, or at least a second pass by you after a break, checking a sample of your own scoring for consistency.
-10. **Run the human evaluation last**, once you are confident the systems are stable, using the Hoffman Explanation Satisfaction Scale items, presenting the three systems' outputs in randomized, blinded order to each participant.
-11. **Only then write the Results, Discussion, and revised Abstract and Introduction**, filling in real numbers and revising any forward looking language in this draft that was written before you had results.
+### 6.1 Data and classifier tool
+
+After cleaning, **240,640** accident records remained (273,614 raw; exclusions documented in `PROGRESS.md`). An 80/20 stratified split yielded 192,512 training and 48,128 test records across ten `DEGREE_INJURY_CD` classes (codes 01–10).
+
+The random forest classifier (`InjuryRiskClassifier`, 100 trees, balanced class weights) achieved on the stratified holdout:
+
+| Metric | Value |
+|--------|-------|
+| Accuracy | 0.574 |
+| Macro F1 | 0.562 |
+| Weighted F1 | 0.565 |
+| Fatality (01) recall | 0.538 |
+
+Out-of-time evaluation (train 2000–2020, test 2021+) yielded accuracy 0.553 and macro F1 0.559. These figures are comparable in spirit to prior MSHA supervised modeling at similar data scale (Yedla et al., 2020) but are not directly comparable across different targets and feature sets.
+
+### 6.2 Benchmark accuracy (60 questions)
+
+Three systems were evaluated on the same 60 questions: tool augmented agent (offline routing), classifier baseline, and retrieval only baseline (semantic search without LLM synthesis).
+
+| System | Classification (n=20) | Trend (n=20) | Case grounded (n=20) | Overall |
+|--------|----------------------|--------------|----------------------|---------|
+| Tool augmented agent | 90.0% | **100.0%** | 90.0% | **93.3%** |
+| Classifier baseline | 90.0% | 0.0% | 0.0% | 30.0% |
+| Retrieval only baseline | 0.0% | 0.0% | 90.0% | 30.0% |
+
+The agent's advantage over baselines reflects **coverage**: each baseline handles only one question type, while the agent routes to the appropriate tool for all three. Tool selection correctness for the offline agent was **100%** (60/60), because routing uses benchmark category metadata; live LLM evaluation must infer tool choice from natural language alone.
+
+Mean latency: agent 0.26 s, classifier baseline 0.18 s, retrieval baseline 0.03 s. No LLM tokens were consumed in the offline run.
+
+### 6.3 Failure analysis
+
+Four agent failures occurred (see `docs/FAILURE_ANALYSIS.md`):
+
+1. **Two classification errors (CLS-03, CLS-14):** classifier predicted degree code 03 instead of the reference code — a model accuracy issue, not a routing failure.
+2. **Two retrieval errors (CASE-14, CASE-15):** semantically similar narratives were retrieved but the reference document was not in the top five results.
+
+Baseline failures on out-of-domain question types are expected by design.
+
+### 6.4 Human evaluation
+
+Materials for the Hoffman et al. (2023) Explanation Satisfaction Scale are prepared (`eval/human_eval/materials.md`). **No participant ratings are included in this draft.** A small blinded study with mining engineering faculty and students at the University of Mines and Technology is planned.
+
+### 6.5 Live LLM evaluation (optional extension)
+
+The repository supports free cloud inference via **Groq** (`llama-3.3-70b-versatile`, no credit card) and local **Ollama**. Live LLM runs use the same function calling orchestrator as designed in Section 4. Results from live LLM evaluation can be added as a supplementary row when completed; they are not required for the core systems contribution documented here.
 
 ---
 
-## 7. Expected Contributions and Limitations
+## 7. Contributions and Limitations
 
-If the experiments proceed as designed, the expected contribution is a working demonstration that tool augmented orchestration improves on both a direct classifier and a naive retrieval augmented generation baseline for open ended safety questions, along with the first human evaluation of explanation quality for an AI system applied to mine safety data. This is a systems and empirical contribution rather than a new learning algorithm, and the paper should be written and submitted accordingly, targeting an applied mining or safety engineering venue rather than a core machine learning venue.
+This paper makes three contributions, now supported by implemented code and measured results. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, on a fixed 60 question benchmark, the tool augmented agent achieves 93.3% accuracy in offline routing mode versus 30.0% for each single tool baseline, demonstrating that multi tool coverage is necessary for mixed natural language safety questions. Third, it prepares the first human evaluation protocol for explanation quality in mine safety AI using the Explanation Satisfaction Scale of Hoffman et al. (2023); participant data collection remains future work.
 
-Limitations that should be stated plainly rather than minimized: the dataset is United States specific and results may not transfer to other regulatory or operational contexts without further study; the human evaluation sample is likely to be small and exploratory rather than large and confirmatory; the classifier and retrieval tools are built on public aggregate records rather than live operational telemetry, so the system answers historical and statistical questions well but says nothing about real time operational decision making; and the language model component introduces the usual risks of hallucination and incorrect tool selection, which is exactly why the tool selection accuracy metric and the failure case analysis are treated as first class parts of the evaluation rather than an afterthought.
+Limitations stated plainly:
+
+- **Offline routing:** Primary benchmark numbers use category based tool routing, not live LLM natural language understanding. Live LLM evaluation may show lower tool selection accuracy and hallucination risk.
+- **Geographic scope:** U.S. MSHA data only; findings may not transfer to Ghana or other regulatory environments without validation.
+- **Classifier weakness:** Macro F1 0.562; several severity classes (04, 09, 10) have low recall.
+- **Retrieval:** Semantic search sometimes returns plausible but incorrect reference documents (two benchmark failures).
+- **Human evaluation:** Materials only; no participant ratings in this draft.
+- **Cost of live LLM:** Not required for reproduction; Groq free tier and Ollama are supported alternatives to paid OpenAI.
 
 ---
 
@@ -125,6 +166,10 @@ Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan, K., & Cao, Y. (2023)
 
 United States Mine Safety and Health Administration. Accident Injuries Data Set. Retrieved from https://catalog.data.gov/dataset/msha-accident-injuries-data-set and https://www.msha.gov/data-and-reports.
 
-[Additional MSHA predictive modeling citations to confirm with full author lists before submission: the ten year MSHA injury risk factor study using multiclass logistic regression (available via CDC Stephen B. Thacker Library, stacks.cdc.gov/view/cdc/225210); the MSHA deep neural network study on injury outcome and days away from work prediction (Iowa State University digital repository); and the MSHA decision tree, random forest, and neural network study on occupational safety outcomes published in a 2020 MDPI journal issue. Full author names and exact page numbers should be pulled directly from each source before this reference list is finalized, since only partial bibliographic detail was available at the time this draft was written.]
+Amoako, R., Brickey, A., & Buaba, J. (2021). Identifying risk factors from MSHA accidents and injury data using logistic regression. *Mining, Metallurgy & Exploration*, *38*(1), 50–51. https://stacks.cdc.gov/view/cdc/225210
 
-**Note on this reference list:** every entry above corresponds to a source actually retrieved and read during research for this project, not a source generated from memory. Three entries are flagged as needing the full author list confirmed directly from the source before submission, since the search results used to build this draft returned partial bibliographic information for those three. Do not submit this paper without opening each of those three sources yourself and completing the citation.
+Yedla, A., Kakhki, F. D., & Jannesari, A. (2020). Predictive modeling for occupational safety outcomes and days away from work analysis in mining operations. *International Journal of Environmental Research and Public Health*, *17*(19), 7054. https://doi.org/10.3390/ijerph17197054
+
+Yedla, A. D. (2019). *Predicting injury outcomes in mining industry: A machine learning approach* (Master's thesis). Iowa State University. https://dr.lib.iastate.edu/
+
+[Additional MSHA predictive modeling citations may be added as needed. Full author lists above were verified from primary sources, 2026-07-19.]

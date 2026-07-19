@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from collections import defaultdict
@@ -13,7 +14,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-RESULTS_PATH = Path(__file__).resolve().parent / "results" / "benchmark_runs.json"
+RESULTS_PATH = Path(__file__).resolve().parent / "results" / os.environ.get("BENCHMARK_OUTPUT", "benchmark_runs.json")
 REFERENCES_PATH = Path(__file__).resolve().parents[1] / "benchmark" / "reference_answers.json"
 SCORES_PATH = Path(__file__).resolve().parent / "results" / "scores.json"
 FAILURES_PATH = Path(__file__).resolve().parent / "results" / "failure_cases.json"

@@ -7,7 +7,7 @@ This document helps researchers reproduce results from the MSHA Safety Agent pap
 - Python 3.10+
 - ~4 GB disk for raw/processed MSHA data
 - ~2 GB for PyTorch and embedding models (downloaded on first use)
-- OpenAI API key (optional until Steps 5–8)
+- OpenAI API key (**optional** — Groq free tier or Ollama work instead; see [FREE_LLM_OPTIONS.md](FREE_LLM_OPTIONS.md))
 
 ## One-command setup
 
@@ -64,15 +64,24 @@ Excludes slow full-index retrieval unless you run `pytest tests/test_retrieval.p
 
 ## Environment variables
 
-Copy `.env.example` to `.env` and set `OPENAI_API_KEY` for cloud LLM runs, **or** use local **Ollama** (no key):
+Copy `.env.example` to `.env`. **No paid API required** for paper reproduction.
+
+| Mode | Setup |
+|------|--------|
+| **Offline (paper numbers)** | `LLM_PROVIDER=offline` then Steps 8–9 |
+| **Groq (free cloud, recommended)** | `GROQ_API_KEY` from [console.groq.com](https://console.groq.com) |
+| **Ollama (local)** | `ollama pull qwen2.5:7b` and `OLLAMA_MODEL=qwen2.5:7b` |
+| **OpenAI (paid)** | `OPENAI_API_KEY` |
+
+Full comparison: [FREE_LLM_OPTIONS.md](FREE_LLM_OPTIONS.md).
 
 ```bash
-# Ollama (auto-detected if running on localhost:11434)
-export OLLAMA_MODEL=qwen2.5:7b
-python -m src.agent.run_agent "How many fatalities in 2015?"
+# Reproduce paper benchmark (offline, zero cost)
+export LLM_PROVIDER=offline
+python eval/run_benchmark.py
+python eval/score.py
+# Expect agent overall accuracy ~93.3%
 ```
-
-The agent and RAG baseline need a configured LLM (OpenAI key or local Ollama). Classifier, trend, and retrieval tools do not.
 
 ## Expected artifacts
 
@@ -115,8 +124,8 @@ Materials only: `eval/human_eval/materials.md` and `eval/human_eval/build_stimul
 | PyTorch install timeout | Re-run `bash scripts/setup.sh` (resumes `.wheels/` download) |
 | `ModuleNotFoundError: src` | Run notebooks from repo root or import `notebooks._path_setup` |
 | Retrieval index missing | Run `python -m src.tools.run_retrieval_index` or notebook 04 |
-| Agent errors | Set `OPENAI_API_KEY` in `.env` |
-| CI vs local | GitHub Actions runs ingest + pytest; full index build is optional locally |
+| Agent errors | Set `GROQ_API_KEY`, run Ollama, or use `LLM_PROVIDER=offline` |
+| CI vs local | GitHub Actions runs ingest + classifier train + pytest |
 
 ## Citation
 

@@ -29,7 +29,7 @@ Select kernel **MSHA Safety Agent** (registered by `scripts/setup.sh`).
 
 - Raw and processed data are not committed. Notebook 01 downloads MSHA open data on first run.
 - Step 4 index build over ~240k narratives takes 15–30 minutes on CPU.
-- Steps 5–8 require `OPENAI_API_KEY` in `.env` for live LLM calls.
+- Steps 5–8: use Groq (free), Ollama, OpenAI, or `LLM_PROVIDER=offline` — see [docs/FREE_LLM_OPTIONS.md](../docs/FREE_LLM_OPTIONS.md)
 - Unit tests in `tests/` mirror notebook checks: `pytest tests/ -v`
 
 See [docs/REPRODUCTION.md](../docs/REPRODUCTION.md) for the full checklist.

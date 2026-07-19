@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -96,7 +97,8 @@ def run_all() -> dict[str, Any]:
     all_rows: list[dict] = []
     for name, (fn, pass_category) in _systems().items():
         all_rows.extend(_run_system(name, fn, questions, pass_category=pass_category))
-    out_path = RESULTS_DIR / "benchmark_runs.json"
+    out_name = os.environ.get("BENCHMARK_OUTPUT", "benchmark_runs.json")
+    out_path = RESULTS_DIR / out_name
     payload = {
         "questions": len(questions),
         "mode": mode,

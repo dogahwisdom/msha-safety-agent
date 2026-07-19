@@ -16,14 +16,16 @@ Instead of only predicting injury severity with a black-box classifier, the syst
 | 2 | Classifier tool | Done |
 | 3 | Trend analysis tool | Done |
 | 4 | Narrative retrieval tool | Done (index build required locally) |
-| 5 | Orchestrator (LLM) | Done (requires `OPENAI_API_KEY`) |
+| 5 | Orchestrator (LLM) | Done (Groq / Ollama / OpenAI / offline) |
 | 6 | Baselines | Done |
-| 7 | Benchmark construction | Done (review before Step 8 runs) |
-| 8 | System comparison runs | Ready (requires API key + benchmark review) |
+| 7 | Benchmark construction | Done |
+| 8 | System comparison runs | Done (offline: 93.3% agent accuracy) |
 | 9 | Scoring | Done |
-| 10 | Human evaluation materials | Done (materials only) |
+| 10 | Human evaluation materials | Done (materials only; participants pending) |
 
-Results, Abstract, and Introduction in the paper draft are revised only after experiments are complete.
+**Free LLM options (no OpenAI payment):** [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md) — **Groq** (recommended, free cloud API) or **Ollama** (local).
+
+Results are in [docs/paper_draft.md](docs/paper_draft.md) Section 6.
 
 ---
 
@@ -68,7 +70,21 @@ source .venv/bin/activate
 bash scripts/setup.sh
 ```
 
-Copy `.env.example` to `.env` and set `OPENAI_API_KEY` for cloud runs, **or use local Ollama** (auto-detected when running on `localhost:11434`; set `OLLAMA_MODEL=qwen2.5:7b`).
+Copy `.env.example` to `.env`. **No payment required:**
+
+```bash
+# Best free option: Groq (sign up at console.groq.com, no credit card)
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# Or local Ollama (auto-detected on localhost:11434)
+OLLAMA_MODEL=qwen2.5:7b
+
+# Or offline tool routing only (paper's primary benchmark numbers)
+LLM_PROVIDER=offline
+```
+
+See [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md).
 
 **Dependencies include:** PyTorch (CPU), sentence-transformers, chromadb, OpenAI SDK, JupyterLab, pandas, scikit-learn.
 
