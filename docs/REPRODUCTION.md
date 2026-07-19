@@ -72,7 +72,7 @@ export OLLAMA_MODEL=qwen2.5:7b
 python -m src.agent.run_agent "How many fatalities in 2015?"
 ```
 
-The agent and RAG baseline require `OPENAI_API_KEY`. Classifier, trend, and retrieval tools do not.
+The agent and RAG baseline need a configured LLM (OpenAI key or local Ollama). Classifier, trend, and retrieval tools do not.
 
 ## Expected artifacts
 
