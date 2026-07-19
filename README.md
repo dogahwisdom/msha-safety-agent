@@ -68,7 +68,7 @@ source .venv/bin/activate
 bash scripts/setup.sh
 ```
 
-Copy `.env.example` to `.env` and set `OPENAI_API_KEY` for agent and RAG baseline notebooks (Steps 5–8).
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` for cloud runs, **or use local Ollama** (auto-detected when running on `localhost:11434`; set `OLLAMA_MODEL=qwen2.5:7b`).
 
 **Dependencies include:** PyTorch (CPU), sentence-transformers, chromadb, OpenAI SDK, JupyterLab, pandas, scikit-learn.
 

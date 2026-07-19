@@ -64,11 +64,12 @@ Excludes slow full-index retrieval unless you run `pytest tests/test_retrieval.p
 
 ## Environment variables
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` for cloud LLM runs, **or** use local **Ollama** (no key):
 
-```
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
+```bash
+# Ollama (auto-detected if running on localhost:11434)
+export OLLAMA_MODEL=qwen2.5:7b
+python -m src.agent.run_agent "How many fatalities in 2015?"
 ```
 
 The agent and RAG baseline require `OPENAI_API_KEY`. Classifier, trend, and retrieval tools do not.

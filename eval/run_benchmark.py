@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 import time
 from pathlib import Path
@@ -13,6 +12,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from src.agent.llm_client import llm_provider
 from src.agent.logging_utils import RunLogger
 from src.agent.orchestrator import MSHASafetyAgent
 from src.baselines.classifier_baseline import ClassifierBaseline
@@ -68,12 +68,15 @@ def _run_system(
 
 
 def _systems() -> dict[str, tuple[Callable[..., dict[str, Any]], bool]]:
-    use_llm = bool(os.environ.get("OPENAI_API_KEY"))
-    if use_llm:
+    provider = llm_provider()
+    if provider:
+        agent = MSHASafetyAgent()
+        classifier = ClassifierBaseline()
+        rag = RAGBaseline()
         return {
-            "agent": (lambda q, lg, category="": MSHASafetyAgent().answer(q, logger=lg), False),
-            "classifier_baseline": (lambda q, lg, category="": ClassifierBaseline().answer(q, logger=lg), False),
-            "rag_baseline": (lambda q, lg, category="": RAGBaseline().answer(q, logger=lg), False),
+            "agent": (lambda q, lg, category="": agent.answer(q, logger=lg), False),
+            "classifier_baseline": (lambda q, lg, category="": classifier.answer(q, logger=lg), False),
+            "rag_baseline": (lambda q, lg, category="": rag.answer(q, logger=lg), False),
         }
 
     offline = OfflineToolAgent()
@@ -89,7 +92,7 @@ def _systems() -> dict[str, tuple[Callable[..., dict[str, Any]], bool]]:
 def run_all() -> dict[str, Any]:
     questions = _load_questions()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    mode = "openai" if os.environ.get("OPENAI_API_KEY") else "offline_tools"
+    mode = llm_provider() or "offline_tools"
     all_rows: list[dict] = []
     for name, (fn, pass_category) in _systems().items():
         all_rows.extend(_run_system(name, fn, questions, pass_category=pass_category))

@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from src.agent.logging_utils import RunLogger
-from src.agent.orchestrator import _get_openai_client
+from src.agent.llm_client import get_llm_client, get_llm_model
 from src.tools.retrieval import NarrativeRetriever
 
 RAG_SYSTEM_PROMPT = """You answer mine safety questions using only the retrieved MSHA incident narratives provided.
@@ -22,9 +21,9 @@ class RAGBaseline:
         top_k: int = 5,
     ) -> None:
         self.retriever = retriever or NarrativeRetriever()
-        self.model = model or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+        self.model = model or get_llm_model()
         self.top_k = top_k
-        self.client = _get_openai_client()
+        self.client = get_llm_client()
 
     def answer(self, question: str, logger: RunLogger | None = None) -> dict[str, Any]:
         logger = logger or RunLogger("rag_baseline")

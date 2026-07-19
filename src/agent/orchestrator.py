@@ -3,27 +3,16 @@
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
+from src.agent.llm_client import get_llm_client, get_llm_model
 from src.agent.logging_utils import RunLogger
 from src.agent.prompts import SYSTEM_PROMPT
 from src.agent.tools import TOOL_SCHEMAS, AgentToolExecutor
 
 
-def _get_openai_client():
-    try:
-        from openai import OpenAI
-    except ImportError as exc:
-        raise ImportError("Install openai package: pip install openai") from exc
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set. Copy .env.example to .env and add your key.")
-    return OpenAI(api_key=api_key)
-
-
 class MSHASafetyAgent:
-    """Tool-augmented agent loop using OpenAI function calling."""
+    """Tool-augmented agent loop using OpenAI-compatible function calling."""
 
     def __init__(
         self,
@@ -31,8 +20,8 @@ class MSHASafetyAgent:
         tool_executor: AgentToolExecutor | None = None,
         max_tool_rounds: int = 6,
     ) -> None:
-        self.client = _get_openai_client()
-        self.model = model or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+        self.client = get_llm_client()
+        self.model = model or get_llm_model()
         self.tool_executor = tool_executor or AgentToolExecutor()
         self.max_tool_rounds = max_tool_rounds
 
