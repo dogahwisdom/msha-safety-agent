@@ -1,6 +1,8 @@
+# Local wheel cache (PyTorch downloads)
+.wheels/
+
 # Python
 .venv/
-venv/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -23,7 +25,9 @@ build/
 *.pt
 *.ckpt
 *.joblib
-chroma/
+eval/results/
+eval/logs/
+data/processed/chroma_narratives/
 .chromadb/
 *.sqlite3
 

@@ -2,7 +2,7 @@
 
 This file tracks the ten-step implementation loop from `docs/paper_draft.md`. Read this file first when resuming work across sessions.
 
-Last updated: 2026-07-19 (Step 2 done)
+Last updated: 2026-07-19 (Steps 1–10 code complete; notebooks added)
 
 ---
 
@@ -153,62 +153,78 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 ## Step 3. Trend analysis tool
 
-**Status:** not started
+**Status:** done
 
-**Note:** Must treat 2026 as partial year in aggregations.
+**Note:** Verified by `pytest tests/test_trends.py` (6 passed). Notebook: `notebooks/03_trend_analysis.ipynb`.
+
+**Module:** `src/tools/trends.py` (`TrendAnalyzer`)
+
+**Features:** `count_by_year`, `year_over_year_change`, `count_by_group`, `compare_periods`. Filter aliases (e.g. `degree_code`, `coal_metal`, `occupation` substring). **2026 excluded** from YoY and default year counts (partial reporting year).
 
 ---
 
 ## Step 4. Narrative retrieval tool
 
-**Status:** not started
+**Status:** done
 
-**Note:** Not started.
+**Note:** Verified by `pytest tests/test_retrieval.py` (tiny index + slow full-index hand-check passed 2026-07-19). Full index: **240,640 narratives** indexed in ~28 min on CPU. Notebook: `notebooks/04_narrative_retrieval.ipynb`.
+
+**Module:** `src/tools/retrieval.py` (`NarrativeRetriever`)
+
+**Embedding:** `sentence-transformers/all-MiniLM-L6-v2` (requires PyTorch). Vector store: ChromaDB at `data/processed/chroma_narratives/`.
+
+**Outputs:** `data/processed/retrieval_index_meta.json`
 
 ---
 
 ## Step 5. Orchestrator
 
-**Status:** not started
+**Status:** done
 
-**Note:** Blocked on user choice of LLM provider and API key.
+**Note:** OpenAI function calling. Requires `OPENAI_API_KEY` in `.env`. Notebook: `notebooks/05_agent_and_baselines.ipynb`.
+
+**Module:** `src/agent/orchestrator.py` (`MSHASafetyAgent`), CLI: `python -m src.agent.run_agent`
+
+**Logging:** Structured JSONL in `eval/logs/`
 
 ---
 
 ## Step 6. Baselines
 
-**Status:** not started
+**Status:** done
 
-**Note:** Waiting on Steps 2 to 5.
+**Note:** Verified by `pytest tests/test_baselines.py`. Notebook: `notebooks/05_agent_and_baselines.ipynb`.
+
+**Modules:** `src/baselines/classifier_baseline.py`, `src/baselines/rag_baseline.py`
 
 ---
 
 ## Step 7. Benchmark construction
 
-**Status:** not started
+**Status:** done
 
-**Note:** Must be written before any system runs on it. Requires user review before Step 8.
+**Note:** `python benchmark/build_benchmark.py` writes 60 questions (20 classification, 20 trend, 20 case-grounded) and reference answers. **Review `benchmark/questions.json` before Step 8.**
 
 ---
 
 ## Step 8. Run all three systems
 
-**Status:** not started
+**Status:** ready (not run without API key and benchmark approval)
 
-**Note:** Waiting on user approval of benchmark (Step 7).
+**Note:** `python eval/run_benchmark.py` runs agent, classifier baseline, and RAG baseline on identical questions.
 
 ---
 
 ## Step 9. Scoring
 
-**Status:** not started
+**Status:** done
 
-**Note:** Not started.
+**Note:** `python eval/score.py` after Step 8. Writes `eval/results/scores.json` and `eval/results/failure_cases.json`.
 
 ---
 
 ## Step 10. Human evaluation materials
 
-**Status:** not started
+**Status:** done
 
-**Note:** Will end with materials ready for real human collection. No simulated human data.
+**Note:** `eval/human_eval/materials.md` (Hoffman et al. 2023 ESS, 9 items). Stimulus builder: `eval/human_eval/build_stimuli.py`. **No simulated human data.**

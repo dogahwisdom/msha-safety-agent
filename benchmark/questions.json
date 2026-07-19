@@ -1,0 +1,1029 @@
+{
+  "version": 1,
+  "total_questions": 60,
+  "category_counts": {
+    "classification": 20,
+    "trend": 20,
+    "case_grounded": 20
+  },
+  "notes": [
+    "Reference answers derived from cleaned data and tools, not from agent outputs.",
+    "Partial year 2026 excluded from trend count references where applicable."
+  ],
+  "questions": [
+    {
+      "id": "CLS-01",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=3, classification_cd=31, occupation_cd=345, activity_cd=48, injury_source_cd=96, nature_injury_cd=240, inj_body_part_cd=122, mining_equip_cd=UNK, coal_metal_ind=M, accident_type_cd=42.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "07",
+        "document_no": "220181630017"
+      }
+    },
+    {
+      "id": "CLS-02",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=3, classification_cd=18, occupation_cd=375, activity_cd=22, injury_source_cd=117, nature_injury_cd=330, inj_body_part_cd=520, mining_equip_cd=52, coal_metal_ind=M, accident_type_cd=12.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "05",
+        "document_no": "220061710005"
+      }
+    },
+    {
+      "id": "CLS-03",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=1, classification_cd=18, occupation_cd=4, activity_cd=39, injury_source_cd=123, nature_injury_cd=330, inj_body_part_cd=450, mining_equip_cd=UNK, coal_metal_ind=M, accident_type_cd=17.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "05",
+        "document_no": "220053470013"
+      }
+    },
+    {
+      "id": "CLS-04",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=30, classification_cd=18, occupation_cd=302, activity_cd=99, injury_source_cd=10, nature_injury_cd=330, inj_body_part_cd=450, mining_equip_cd=UNK, coal_metal_ind=M, accident_type_cd=17.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220010120075"
+      }
+    },
+    {
+      "id": "CLS-05",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=30, classification_cd=18, occupation_cd=374, activity_cd=23, injury_source_cd=117, nature_injury_cd=330, inj_body_part_cd=420, mining_equip_cd=67, coal_metal_ind=C, accident_type_cd=17.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220101650026"
+      }
+    },
+    {
+      "id": "CLS-06",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=1, classification_cd=9, occupation_cd=16, activity_cd=28, injury_source_cd=43, nature_injury_cd=330, inj_body_part_cd=420, mining_equip_cd=UNK, coal_metal_ind=C, accident_type_cd=28.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220012180065"
+      }
+    },
+    {
+      "id": "CLS-07",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=3, classification_cd=12, occupation_cd=382, activity_cd=39, injury_source_cd=48, nature_injury_cd=220, inj_body_part_cd=310, mining_equip_cd=24, coal_metal_ind=M, accident_type_cd=5.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220240820012"
+      }
+    },
+    {
+      "id": "CLS-08",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=30, classification_cd=9, occupation_cd=319, activity_cd=28, injury_source_cd=92, nature_injury_cd=310, inj_body_part_cd=130, mining_equip_cd=UNK, coal_metal_ind=C, accident_type_cd=4.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220062050054"
+      }
+    },
+    {
+      "id": "CLS-09",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=1, classification_cd=17, occupation_cd=46, activity_cd=79, injury_source_cd=90, nature_injury_cd=220, inj_body_part_cd=700, mining_equip_cd=54, coal_metal_ind=C, accident_type_cd=4.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "05",
+        "document_no": "220111430003"
+      }
+    },
+    {
+      "id": "CLS-10",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=30, classification_cd=9, occupation_cd=374, activity_cd=28, injury_source_cd=88, nature_injury_cd=180, inj_body_part_cd=330, mining_equip_cd=UNK, coal_metal_ind=C, accident_type_cd=8.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "06",
+        "document_no": "220023100023"
+      }
+    },
+    {
+      "id": "CLS-11",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=30, classification_cd=10, occupation_cd=304, activity_cd=30, injury_source_cd=49, nature_injury_cd=180, inj_body_part_cd=340, mining_equip_cd=28, coal_metal_ind=M, accident_type_cd=8.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "06",
+        "document_no": "220220550012"
+      }
+    },
+    {
+      "id": "CLS-12",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=3, classification_cd=17, occupation_cd=304, activity_cd=31, injury_source_cd=88, nature_injury_cd=180, inj_body_part_cd=340, mining_equip_cd=29, coal_metal_ind=M, accident_type_cd=8.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "06",
+        "document_no": "220072600068"
+      }
+    },
+    {
+      "id": "CLS-13",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=2, classification_cd=9, occupation_cd=374, activity_cd=28, injury_source_cd=4, nature_injury_cd=330, inj_body_part_cd=420, mining_equip_cd=UNK, coal_metal_ind=M, accident_type_cd=29.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "05",
+        "document_no": "220092810024"
+      }
+    },
+    {
+      "id": "CLS-14",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=1, classification_cd=7, occupation_cd=116, activity_cd=80, injury_source_cd=90, nature_injury_cd=220, inj_body_part_cd=450, mining_equip_cd=UNK, coal_metal_ind=C, accident_type_cd=4.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "06",
+        "document_no": "220141430041"
+      }
+    },
+    {
+      "id": "CLS-15",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=3, classification_cd=10, occupation_cd=376, activity_cd=39, injury_source_cd=51, nature_injury_cd=220, inj_body_part_cd=340, mining_equip_cd=28, coal_metal_ind=M, accident_type_cd=8.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220252730023"
+      }
+    },
+    {
+      "id": "CLS-16",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=1, classification_cd=7, occupation_cd=49, activity_cd=16, injury_source_cd=90, nature_injury_cd=220, inj_body_part_cd=510, mining_equip_cd=UNK, coal_metal_ind=C, accident_type_cd=4.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220030130120"
+      }
+    },
+    {
+      "id": "CLS-17",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=3, classification_cd=30, occupation_cd=376, activity_cd=26, injury_source_cd=58, nature_injury_cd=250, inj_body_part_cd=600, mining_equip_cd=UNK, coal_metal_ind=M, accident_type_cd=32.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "07",
+        "document_no": "220172070045"
+      }
+    },
+    {
+      "id": "CLS-18",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=3, classification_cd=17, occupation_cd=363, activity_cd=26, injury_source_cd=55, nature_injury_cd=170, inj_body_part_cd=340, mining_equip_cd=53, coal_metal_ind=M, accident_type_cd=24.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "04",
+        "document_no": "220173390003"
+      }
+    },
+    {
+      "id": "CLS-19",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=30, classification_cd=9, occupation_cd=327, activity_cd=28, injury_source_cd=35, nature_injury_cd=220, inj_body_part_cd=340, mining_equip_cd=UNK, coal_metal_ind=C, accident_type_cd=24.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "03",
+        "document_no": "220120170042"
+      }
+    },
+    {
+      "id": "CLS-20",
+      "category": "classification",
+      "question": "Predict injury degree for: subunit_cd=1, classification_cd=9, occupation_cd=54, activity_cd=28, injury_source_cd=88, nature_injury_cd=180, inj_body_part_cd=330, mining_equip_cd=UNK, coal_metal_ind=C, accident_type_cd=8.",
+      "expected_tools": [
+        "classify_injury_risk"
+      ],
+      "reference": {
+        "type": "degree_code",
+        "value": "06",
+        "document_no": "220112290032"
+      }
+    },
+    {
+      "id": "TRD-01",
+      "category": "trend",
+      "question": "How many MSHA fatalities (degree code 01) occurred in 2015?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2015,
+        "value": 29,
+        "filters": {
+          "degree_code": "01"
+        }
+      }
+    },
+    {
+      "id": "TRD-02",
+      "category": "trend",
+      "question": "How many MSHA fatalities occurred in 2020?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2020,
+        "value": 29,
+        "filters": {
+          "degree_code": "01"
+        }
+      }
+    },
+    {
+      "id": "TRD-03",
+      "category": "trend",
+      "question": "How many coal mine injuries occurred in Texas in 2022?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2022,
+        "value": 8,
+        "filters": {
+          "coal_metal": "C",
+          "state": "TX"
+        }
+      }
+    },
+    {
+      "id": "TRD-04",
+      "category": "trend",
+      "question": "How many handling-of-materials injuries occurred in 2019?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2019,
+        "value": 1984,
+        "filters": {
+          "classification": "HANDLING OF MATERIALS"
+        }
+      }
+    },
+    {
+      "id": "TRD-05",
+      "category": "trend",
+      "question": "How many roof bolter injuries occurred in 2018?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2018,
+        "value": 380,
+        "filters": {
+          "occupation": "Roof bolter"
+        }
+      }
+    },
+    {
+      "id": "TRD-06",
+      "category": "trend",
+      "question": "How many injuries occurred at metal/non-metal mines in Nevada in 2021?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2021,
+        "value": 190,
+        "filters": {
+          "coal_metal": "M",
+          "state": "NV"
+        }
+      }
+    },
+    {
+      "id": "TRD-07",
+      "category": "trend",
+      "question": "How many degree-code-03 injuries occurred in 2016?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2016,
+        "value": 2043,
+        "filters": {
+          "degree_code": "03"
+        }
+      }
+    },
+    {
+      "id": "TRD-08",
+      "category": "trend",
+      "question": "How many degree-code-06 injuries occurred in 2014?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2014,
+        "value": 2341,
+        "filters": {
+          "degree_code": "06"
+        }
+      }
+    },
+    {
+      "id": "TRD-09",
+      "category": "trend",
+      "question": "How many powered haulage classification injuries occurred in 2017?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2017,
+        "value": 496,
+        "filters": {
+          "classification": "POWERED HAULAGE"
+        }
+      }
+    },
+    {
+      "id": "TRD-10",
+      "category": "trend",
+      "question": "How many fall of roof classification injuries occurred in 2013?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2013,
+        "value": 243,
+        "filters": {
+          "classification": "FALL OF ROOF OR BACK"
+        }
+      }
+    },
+    {
+      "id": "TRD-11",
+      "category": "trend",
+      "question": "Compare coal mine injury counts between 2010-2014 and 2015-2019.",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "period_compare",
+        "period_a": [
+          2010,
+          2014
+        ],
+        "period_b": [
+          2015,
+          2019
+        ],
+        "counts": [
+          {
+            "period": "2010-2014",
+            "injury_count": 21511
+          },
+          {
+            "period": "2015-2019",
+            "injury_count": 12746
+          }
+        ],
+        "filters": {
+          "coal_metal": "C"
+        }
+      }
+    },
+    {
+      "id": "TRD-12",
+      "category": "trend",
+      "question": "Compare fatality counts between 2005-2009 and 2010-2014.",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "period_compare",
+        "period_a": [
+          2005,
+          2009
+        ],
+        "period_b": [
+          2010,
+          2014
+        ],
+        "counts": [
+          {
+            "period": "2005-2009",
+            "injury_count": 286
+          },
+          {
+            "period": "2010-2014",
+            "injury_count": 232
+          }
+        ],
+        "filters": {
+          "degree_code": "01"
+        }
+      }
+    },
+    {
+      "id": "TRD-13",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2010?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2010,
+        "value": 89,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "TRD-14",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2011?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2011,
+        "value": 114,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "TRD-15",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2012?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2012,
+        "value": 78,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "TRD-16",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2013?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2013,
+        "value": 88,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "TRD-17",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2014?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2014,
+        "value": 89,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "TRD-18",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2015?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2015,
+        "value": 86,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "TRD-19",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2016?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2016,
+        "value": 55,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "TRD-20",
+      "category": "trend",
+      "question": "How many permanent disability injuries (degree code 02) occurred in 2017?",
+      "expected_tools": [
+        "analyze_trends"
+      ],
+      "reference": {
+        "type": "count",
+        "year": 2017,
+        "value": 56,
+        "filters": {
+          "degree_code": "02"
+        }
+      }
+    },
+    {
+      "id": "CASE-01",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: roof fall underground coal miner pinned",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "roof fall underground coal miner pinned",
+        "document_numbers": [
+          "220140920036",
+          "220093440021",
+          "220143450029",
+          "220013370003",
+          "220013370002"
+        ],
+        "top_narrative": "Employee had installed a pin when a rock or coal fell from the roof striking him on the right foot."
+      }
+    },
+    {
+      "id": "CASE-02",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: electrical shock continuous miner cable",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "electrical shock continuous miner cable",
+        "document_numbers": [
+          "220010510154",
+          "220022530015",
+          "220060680038",
+          "220020220087",
+          "220060790039"
+        ],
+        "top_narrative": "PULLING ON CONTINUOUS MINER CABLE."
+      }
+    },
+    {
+      "id": "CASE-03",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: haul truck backed into rib operator",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "haul truck backed into rib operator",
+        "document_numbers": [
+          "220040510074",
+          "220220130017",
+          "220200290006",
+          "220043310053",
+          "220001450022"
+        ],
+        "top_narrative": "HAUL TRUCK AND LOADER BACKED INTO EACH OTHER."
+      }
+    },
+    {
+      "id": "CASE-04",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: methane ignition explosion underground",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "methane ignition explosion underground",
+        "document_numbers": [
+          "220052620131",
+          "220052620130",
+          "220052620129",
+          "220030290001",
+          "220030290002"
+        ],
+        "top_narrative": "RIPPERS STRUCK TOP IGNITING METHANE"
+      }
+    },
+    {
+      "id": "CASE-05",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: ladder fall surface mine maintenance",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "ladder fall surface mine maintenance",
+        "document_numbers": [
+          "220122400027",
+          "220232260031",
+          "220003110010",
+          "220072570008",
+          "220130180038"
+        ],
+        "top_narrative": "Miner was descending a ladder after performing maintenance, slipped off of ladder and fell approximately 4 ft. to the work deck below injuring back.  Miners has been placed on restricted duty and will have follow-up exam 8/30/2012."
+      }
+    },
+    {
+      "id": "CASE-06",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: conveyor belt entanglement amputation",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "conveyor belt entanglement amputation",
+        "document_numbers": [
+          "220213470001",
+          "220001190001",
+          "220003530116",
+          "220072710006",
+          "220013650007"
+        ],
+        "top_narrative": "Employee was underneath Conveyor Belt and became entangled."
+      }
+    },
+    {
+      "id": "CASE-07",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: roof bolter hit by falling rock",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "roof bolter hit by falling rock",
+        "document_numbers": [
+          "220042100016",
+          "220233340020",
+          "220013170132",
+          "220013250030",
+          "220151490038"
+        ],
+        "top_narrative": "Injured was struck by falling rock while roof bolting."
+      }
+    },
+    {
+      "id": "CASE-08",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: dozer rollover surface coal mine",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "dozer rollover surface coal mine",
+        "document_numbers": [
+          "220100250045",
+          "220011210004",
+          "220082770047",
+          "220083400032",
+          "220111310026"
+        ],
+        "top_narrative": "A dozer operator was pushing coal cleanings into a berm in a drilling and blasting area. While backing to reposition, the operator misjudged her distance from the crest and backed off the highwall. The dozer fell approximately 33 feet onto a slough pile. The operator was dignosed with one ruptured disc."
+      }
+    },
+    {
+      "id": "CASE-09",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: welding burn hand injury",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "welding burn hand injury",
+        "document_numbers": [
+          "220072420009",
+          "220030410136",
+          "220070260004",
+          "220012840005",
+          "220001150036"
+        ],
+        "top_narrative": "Burn to left hand from welding metal."
+      }
+    },
+    {
+      "id": "CASE-10",
+      "category": "case_grounded",
+      "question": "Find historical MSHA incidents similar to: slip fall icy walkway surface mine",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "slip fall icy walkway surface mine",
+        "document_numbers": [
+          "220260060007",
+          "220043550010",
+          "220250520006",
+          "220010160162",
+          "220090540058"
+        ],
+        "top_narrative": "icy walkway"
+      }
+    },
+    {
+      "id": "CASE-11",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: EE came down steps of Loader to ground and when his left foot touched the ground",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "EE came down steps of Loader to ground and when his left foot touched the ground",
+        "document_numbers": [
+          "220091190004",
+          "220052410076",
+          "220050490028",
+          "220012610095",
+          "220020280012"
+        ],
+        "must_include": "220091190004"
+      }
+    },
+    {
+      "id": "CASE-12",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: EE WAS OPERATING WHEEL DOZER #656 WHEN HE TURNEDTHE AC ON TALCUM POWER WAS BLOWN",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "EE WAS OPERATING WHEEL DOZER #656 WHEN HE TURNEDTHE AC ON TALCUM POWER WAS BLOWN",
+        "document_numbers": [
+          "220002720008",
+          "220001510165",
+          "220162210009",
+          "220030130092",
+          "220022960020"
+        ],
+        "must_include": "220002720008"
+      }
+    },
+    {
+      "id": "CASE-13",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: ATTEMPTING TO SLOW DOWN BELT/SHEAVE ASSEMBLY, BELT CAUGHT GLOVE PULLED FINGERS B",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "ATTEMPTING TO SLOW DOWN BELT/SHEAVE ASSEMBLY, BELT CAUGHT GLOVE PULLED FINGERS B",
+        "document_numbers": [
+          "220030100023",
+          "220161950020",
+          "220240040020",
+          "220081190055",
+          "220011660030"
+        ],
+        "must_include": "220030100023"
+      }
+    },
+    {
+      "id": "CASE-14",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: Employee was pulling a rope that raises and lowers the Carbis safety cage on loa",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "Employee was pulling a rope that raises and lowers the Carbis safety cage on loa",
+        "document_numbers": [
+          "220103050056",
+          "220050800084",
+          "220223120009",
+          "220082380037",
+          "220261390016"
+        ],
+        "must_include": "220170410011"
+      }
+    },
+    {
+      "id": "CASE-15",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: EE twisted left knee stepping on a loose rock on the ground. EE placed on restri",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "EE twisted left knee stepping on a loose rock on the ground. EE placed on restri",
+        "document_numbers": [
+          "220023220139",
+          "220162110004",
+          "220211960014",
+          "220013650051",
+          "220010850058"
+        ],
+        "must_include": "220211960014"
+      }
+    },
+    {
+      "id": "CASE-16",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: EMPLOYEE WAS DRILLING WHEN HIS LACK LEG STEEL STOPPED ABRUPTLY AGAINST A GROUND ",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "EMPLOYEE WAS DRILLING WHEN HIS LACK LEG STEEL STOPPED ABRUPTLY AGAINST A GROUND ",
+        "document_numbers": [
+          "220012780070",
+          "220083170061",
+          "220020530070",
+          "220261520010",
+          "220003210042"
+        ],
+        "must_include": "220012780070"
+      }
+    },
+    {
+      "id": "CASE-17",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: EMPLOYEE WAS REHANGING CABLE OVER TOP OF SHUTTLE CAR CANOPY WHEN A PIECE OF ROCK",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "EMPLOYEE WAS REHANGING CABLE OVER TOP OF SHUTTLE CAR CANOPY WHEN A PIECE OF ROCK",
+        "document_numbers": [
+          "220052170053",
+          "220002550112",
+          "220081010036",
+          "220122830006",
+          "220221100007"
+        ],
+        "must_include": "220052170053"
+      }
+    },
+    {
+      "id": "CASE-18",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: INJURED WAS OPERATING HAUL TRUCK AND WAS BEING LOADED BY P&H SHOVEL. DURING FIRS",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "INJURED WAS OPERATING HAUL TRUCK AND WAS BEING LOADED BY P&H SHOVEL. DURING FIRS",
+        "document_numbers": [
+          "220032450030",
+          "220222630010",
+          "220153160011",
+          "220040910042",
+          "220092510022"
+        ],
+        "must_include": "220032450030"
+      }
+    },
+    {
+      "id": "CASE-19",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: EE WAS THREADING ELECTRICAL CONDUIT AND CUT FINGER. TWO STITCHES WERE REQUIRED. ",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "EE WAS THREADING ELECTRICAL CONDUIT AND CUT FINGER. TWO STITCHES WERE REQUIRED. ",
+        "document_numbers": [
+          "220050140022",
+          "220050590048",
+          "220050030086",
+          "220100950028",
+          "220021090007"
+        ],
+        "must_include": "220050140022"
+      }
+    },
+    {
+      "id": "CASE-20",
+      "category": "case_grounded",
+      "question": "Find incidents similar to this narrative snippet: Employee was attempting to jump start an lhd with a portable DC jump pack. In th",
+      "expected_tools": [
+        "search_narratives"
+      ],
+      "reference": {
+        "type": "document_set",
+        "query": "Employee was attempting to jump start an lhd with a portable DC jump pack. In th",
+        "document_numbers": [
+          "220040820063",
+          "220050410058",
+          "220011690126",
+          "220180860005",
+          "220063170068"
+        ],
+        "must_include": "220040820063"
+      }
+    }
+  ]
+}

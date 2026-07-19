@@ -8,20 +8,36 @@ Instead of only predicting injury severity with a black-box classifier, the syst
 
 **Implementation progress:** [PROGRESS.md](PROGRESS.md)
 
+**Reproduction guide:** [docs/REPRODUCTION.md](docs/REPRODUCTION.md)
+
 | Step | Component | Status |
 |------|-----------|--------|
 | 1 | Data acquisition and cleaning | Done |
 | 2 | Classifier tool | Done |
-| 3 | Trend analysis tool | Not started |
-| 4 | Narrative retrieval tool | Not started |
-| 5 | Orchestrator (LLM) | Waiting on provider choice |
-| 6 | Baselines | Not started |
-| 7 | Benchmark construction | Not started |
-| 8 | System comparison runs | Not started |
-| 9 | Scoring | Not started |
-| 10 | Human evaluation materials | Not started |
+| 3 | Trend analysis tool | Done |
+| 4 | Narrative retrieval tool | Done (index build required locally) |
+| 5 | Orchestrator (LLM) | Done (requires `OPENAI_API_KEY`) |
+| 6 | Baselines | Done |
+| 7 | Benchmark construction | Done (review before Step 8 runs) |
+| 8 | System comparison runs | Ready (requires API key + benchmark review) |
+| 9 | Scoring | Done |
+| 10 | Human evaluation materials | Done (materials only) |
 
 Results, Abstract, and Introduction in the paper draft are revised only after experiments are complete.
+
+---
+
+## Quick start (researchers)
+
+```bash
+git clone https://github.com/dogahwisdom/msha-safety-agent.git
+cd msha-safety-agent
+bash scripts/setup.sh          # installs PyTorch, Jupyter, all deps
+source .venv/bin/activate
+jupyter lab notebooks/         # run notebooks 01–06 in order
+```
+
+Or use the CLI path documented in [docs/REPRODUCTION.md](docs/REPRODUCTION.md).
 
 ---
 
@@ -29,55 +45,56 @@ Results, Abstract, and Introduction in the paper draft are revised only after ex
 
 | Path | Purpose |
 |------|---------|
+| `notebooks/` | **Primary reproduction path** — one notebook per pipeline stage |
+| `scripts/setup.sh` | Resumable install (PyTorch wheel cache in `.wheels/`) |
 | `data/raw/` | Downloaded MSHA files (not committed) |
-| `data/processed/` | Cleaned and split data (not committed) |
+| `data/processed/` | Cleaned data, models, vector index (not committed) |
 | `src/data/` | Ingestion and cleaning pipeline |
-| `src/tools/` | Classifier, trend, and retrieval tools (independently testable) |
+| `src/tools/` | Classifier, trend, and retrieval tools |
 | `src/agent/` | Orchestrator: system prompt, function calling, agent loop |
 | `src/baselines/` | Plain classifier baseline and single-shot RAG baseline |
-| `benchmark/` | Question set and reference answers (written before any system is run) |
-| `eval/` | Scoring, logging, and Explanation Satisfaction Scale materials |
-| `notebooks/` | Exploratory analysis |
-| `docs/` | Paper draft and later revisions |
-| `tests/` | Unit and integration tests for each module |
+| `benchmark/` | Question set and reference answers |
+| `eval/` | Scoring, logging, and human evaluation materials |
+| `docs/` | Paper draft and reproduction guide |
+| `tests/` | Unit tests mirroring notebook checks |
 
 ---
 
 ## Setup
 
 ```bash
-git clone https://github.com/dogahwisdom/msha-safety-agent.git
-cd msha-safety-agent
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+source .venv/bin/activate
+bash scripts/setup.sh
 ```
 
-Copy `.env.example` to `.env` when you configure an LLM provider for Step 5. Do not commit `.env`.
+Copy `.env.example` to `.env` and set `OPENAI_API_KEY` for agent and RAG baseline notebooks (Steps 5–8).
+
+**Dependencies include:** PyTorch (CPU), sentence-transformers, chromadb, OpenAI SDK, JupyterLab, pandas, scikit-learn.
 
 ---
 
 ## Data pipeline (Step 1)
 
-Download, clean, join, and split MSHA data:
-
 ```bash
 python -m src.data.ingest
 ```
 
-This pulls the [Accident Injuries](https://catalog.data.gov/dataset/msha-accident-injuries-data-set) and [Mines](https://arlweb.msha.gov/OpenGovernmentData/OGIMSHA.asp) datasets from MSHA's open data portal, applies documented filtering rules, and writes:
+Or run [notebooks/01_data_ingestion.ipynb](notebooks/01_data_ingestion.ipynb).
 
-| Output | Description |
-|--------|-------------|
-| `data/processed/accidents_clean.csv` | Cleaned accidents joined to mine context |
-| `data/processed/mines_clean.csv` | Mine identification subset |
-| `data/processed/accidents_train.csv` | 80% stratified training split |
-| `data/processed/accidents_test.csv` | 20% stratified held-out test split |
-| `data/processed/ingestion_summary.json` | Row counts, class distribution, cleaning log |
+**Verified counts (2026-07-19):** 273,614 raw accident rows, 240,640 after cleaning, 192,512 train / 48,128 test.
 
-Re-download raw files with `--force-download` if needed.
+---
 
-**Verified counts (2026-07-19):** 273,614 raw accident rows, 240,640 after cleaning, 192,512 train / 48,128 test. See [PROGRESS.md](PROGRESS.md) for filtering decisions, external review follow-up, and class distribution.
+## Tools and agent
+
+| Step | CLI | Notebook |
+|------|-----|----------|
+| Classifier | `python -m src.tools.run_classifier` | `02_classifier_tool.ipynb` |
+| Trends | `pytest tests/test_trends.py` | `03_trend_analysis.ipynb` |
+| Retrieval | `python -m src.tools.run_retrieval_index` | `04_narrative_retrieval.ipynb` |
+| Agent | `python -m src.agent.run_agent "..."` | `05_agent_and_baselines.ipynb` |
+| Benchmark | `python benchmark/build_benchmark.py` | `06_benchmark_evaluation.ipynb` |
 
 ---
 
@@ -85,39 +102,14 @@ Re-download raw files with `--force-download` if needed.
 
 ```bash
 pytest tests/ -v
+pytest tests/ -m "not slow"   # skip full retrieval index test
 ```
-
-Tests require raw data under `data/raw/`. Run `python -m src.data.ingest` first if you have not downloaded the datasets.
-
----
-
-## Classifier (Step 2)
-
-Train and evaluate the injury severity classifier:
-
-```bash
-python -m src.tools.run_classifier
-```
-
-Writes `data/processed/classifier_evaluation.json` and `data/processed/injury_risk_classifier.joblib`. Uses `select_classifier_features()` only (no leakage columns). Reports accuracy, macro F1, per-class recall, and confusion matrix on both the stratified holdout split and an out-of-time split (train through 2020, test 2021 onward).
 
 ---
 
 ## Implementation order
 
-From Section 6 of the paper draft. Steps must be completed in order; each module is tested before the next step begins.
-
-1. Acquire and clean the MSHA data.
-2. Build and test the classifier tool standalone.
-3. Build and test the trend analysis tool standalone.
-4. Build and hand-check the narrative retrieval index.
-5. Wire up the orchestrator with function calling and full logging (requires LLM provider).
-6. Build both baselines.
-7. Write benchmark questions and reference answers before running any system on them.
-8. Run all three systems under identical conditions and log everything.
-9. Score accuracy against reference answers.
-10. Prepare human evaluation materials (Explanation Satisfaction Scale).
-11. Fill in Results and revise Abstract/Introduction with measured numbers.
+From Section 6 of the paper draft. See [PROGRESS.md](PROGRESS.md) for verified metrics and notes.
 
 ---
 
@@ -125,14 +117,9 @@ From Section 6 of the paper draft. Steps must be completed in order; each module
 
 - [MSHA Accident Injuries Data Set](https://catalog.data.gov/dataset/msha-accident-injuries-data-set)
 - [MSHA Open Government Data Portal](https://arlweb.msha.gov/OpenGovernmentData/OGIMSHA.asp)
-- Field definitions: [Accidents definition file](https://arlweb.msha.gov/OpenGovernmentData/DataSets/Accidents_Definition_File.txt)
-
-Raw and processed data files are excluded from git via `.gitignore`. Clone this repo and run the ingest script to reproduce the processed files locally.
 
 ---
 
 ## Citation
-
-Working title from the paper draft:
 
 > Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis: A Study Using U.S. Mine Safety and Health Administration Data
