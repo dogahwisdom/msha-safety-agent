@@ -4,9 +4,14 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
 RESULTS_PATH = Path(__file__).resolve().parent / "results" / "benchmark_runs.json"
 REFERENCES_PATH = Path(__file__).resolve().parents[1] / "benchmark" / "reference_answers.json"

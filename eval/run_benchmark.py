@@ -3,16 +3,24 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 import time
 from pathlib import Path
 from typing import Any, Callable
 
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 from src.agent.logging_utils import RunLogger
 from src.agent.orchestrator import MSHASafetyAgent
 from src.baselines.classifier_baseline import ClassifierBaseline
+from src.baselines.offline_tool_agent import OfflineToolAgent
 from src.baselines.rag_baseline import RAGBaseline
+from src.baselines.retrieval_only_baseline import RetrievalOnlyBaseline
 
-BENCHMARK_DIR = Path(__file__).resolve().parents[1] / "benchmark"
+BENCHMARK_DIR = _ROOT / "benchmark"
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 
 
@@ -21,13 +29,22 @@ def _load_questions() -> list[dict[str, Any]]:
     return payload["questions"]
 
 
-def _run_system(name: str, answer_fn: Callable[[str, RunLogger], dict[str, Any]], questions: list[dict]) -> list[dict]:
+def _run_system(
+    name: str,
+    answer_fn: Callable[..., dict[str, Any]],
+    questions: list[dict],
+    *,
+    pass_category: bool = False,
+) -> list[dict]:
     rows = []
     for item in questions:
         logger = RunLogger(name, log_dir=RESULTS_DIR / "logs")
         start = time.time()
         try:
-            result = answer_fn(item["question"], logger)
+            if pass_category:
+                result = answer_fn(item["question"], logger, category=item["category"])
+            else:
+                result = answer_fn(item["question"], logger)
             error = None
         except Exception as exc:  # noqa: BLE001 - benchmark runner must capture failures
             result = {"answer": "", "tools_used": [], "usage": {}, "log_path": str(logger.log_path)}
@@ -50,21 +67,41 @@ def _run_system(name: str, answer_fn: Callable[[str, RunLogger], dict[str, Any]]
     return rows
 
 
+def _systems() -> dict[str, tuple[Callable[..., dict[str, Any]], bool]]:
+    use_llm = bool(os.environ.get("OPENAI_API_KEY"))
+    if use_llm:
+        return {
+            "agent": (lambda q, lg, category="": MSHASafetyAgent().answer(q, logger=lg), False),
+            "classifier_baseline": (lambda q, lg, category="": ClassifierBaseline().answer(q, logger=lg), False),
+            "rag_baseline": (lambda q, lg, category="": RAGBaseline().answer(q, logger=lg), False),
+        }
+
+    offline = OfflineToolAgent()
+    retrieval_only = RetrievalOnlyBaseline()
+    classifier = ClassifierBaseline()
+    return {
+        "agent": (lambda q, lg, category="": offline.answer(q, logger=lg, category=category), True),
+        "classifier_baseline": (lambda q, lg, category="": classifier.answer(q, logger=lg), False),
+        "rag_baseline": (lambda q, lg, category="": retrieval_only.answer(q, logger=lg), False),
+    }
+
+
 def run_all() -> dict[str, Any]:
     questions = _load_questions()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    systems = {
-        "agent": lambda q, lg: MSHASafetyAgent().answer(q, logger=lg),
-        "classifier_baseline": lambda q, lg: ClassifierBaseline().answer(q, logger=lg),
-        "rag_baseline": lambda q, lg: RAGBaseline().answer(q, logger=lg),
-    }
+    mode = "openai" if os.environ.get("OPENAI_API_KEY") else "offline_tools"
     all_rows: list[dict] = []
-    for name, fn in systems.items():
-        all_rows.extend(_run_system(name, fn, questions))
+    for name, (fn, pass_category) in _systems().items():
+        all_rows.extend(_run_system(name, fn, questions, pass_category=pass_category))
     out_path = RESULTS_DIR / "benchmark_runs.json"
+    payload = {
+        "questions": len(questions),
+        "mode": mode,
+        "results": all_rows,
+    }
     with out_path.open("w", encoding="utf-8") as handle:
-        json.dump({"questions": len(questions), "results": all_rows}, handle, indent=2, ensure_ascii=False)
-    return {"output": str(out_path), "result_count": len(all_rows)}
+        json.dump(payload, handle, indent=2, ensure_ascii=False)
+    return {"output": str(out_path), "mode": mode, "result_count": len(all_rows)}
 
 
 if __name__ == "__main__":

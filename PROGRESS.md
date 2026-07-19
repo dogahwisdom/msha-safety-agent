@@ -209,9 +209,11 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 ## Step 8. Run all three systems
 
-**Status:** ready (not run without API key and benchmark approval)
+**Status:** done (offline tool mode, 2026-07-19)
 
-**Note:** `python eval/run_benchmark.py` runs agent, classifier baseline, and RAG baseline on identical questions.
+**Note:** Ran `python eval/run_benchmark.py` without `OPENAI_API_KEY` using offline tool routing (`OfflineToolAgent`, `RetrievalOnlyBaseline`). Results: `eval/results/benchmark_runs.json` (mode=`offline_tools`, 180 rows). Re-run with API key set for live LLM agent and RAG baseline.
+
+**Offline overall accuracy (Step 9):** agent 88.3%, classifier_baseline 30.0%, rag_baseline 30.0%. Agent tool-selection rate: 100%.
 
 ---
 
@@ -219,7 +221,7 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Status:** done
 
-**Note:** `python eval/score.py` after Step 8. Writes `eval/results/scores.json` and `eval/results/failure_cases.json`.
+**Note:** `python eval/score.py` after Step 8. Writes `eval/results/scores.json` and `eval/results/failure_cases.json`. Offline run scored 91 failure cases (mostly classifier/RAG on out-of-domain question types, as expected).
 
 ---
 
