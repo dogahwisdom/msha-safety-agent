@@ -16,7 +16,13 @@ class ClassifierBaseline:
     """Answers only by extracting structured fields from the question and classifying."""
 
     def __init__(self, classifier: InjuryRiskClassifier | None = None) -> None:
-        self.classifier = classifier or InjuryRiskClassifier.load()
+        self._classifier = classifier
+
+    @property
+    def classifier(self) -> InjuryRiskClassifier:
+        if self._classifier is None:
+            self._classifier = InjuryRiskClassifier.load()
+        return self._classifier
 
     def answer(self, question: str, logger: RunLogger | None = None) -> dict[str, Any]:
         logger = logger or RunLogger("classifier_baseline")

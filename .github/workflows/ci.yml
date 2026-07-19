@@ -31,5 +31,8 @@ jobs:
       - name: Run data ingestion
         run: python -m src.data.ingest
 
+      - name: Train classifier
+        run: python -m src.tools.run_classifier
+
       - name: Run tests
         run: pytest tests/ -v -m "not slow"
