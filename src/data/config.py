@@ -44,6 +44,32 @@ CLASSIFIER_FEATURE_COLUMNS = [
 
 CLASSIFIER_TARGET_COLUMN = "DEGREE_INJURY_CD"
 
+# Injury degree codes excluded from classifier training and evaluation (unlearnable or out of scope).
+# Code 00 (accident only) had n=1 after cleaning; cannot be learned or evaluated as a class.
+CLASSIFIER_EXCLUDED_TARGET_CODES = ["00"]
+
+# Structured fields that must NOT be used as classifier inputs (leakage or post-outcome data).
+# See PROGRESS.md Step 2 handoff for rationale against MSHA Part 50 field definitions.
+CLASSIFIER_LEAKAGE_COLUMNS = [
+    "DEGREE_INJURY_CD",
+    "DEGREE_INJURY",
+    "DAYS_LOST",
+    "DAYS_RESTRICT",
+    "SCHEDULE_CHARGE",
+    "RETURN_TO_WORK_DT",
+    "TRANS_TERM",
+    "NO_INJURIES",
+    "IMMED_NOTIFY_CD",
+    "IMMED_NOTIFY",
+    "NARRATIVE",
+    "DOCUMENT_NO",
+    "CLOSED_DOC_NO",
+]
+
+# Out-of-time evaluation split for Step 2 robustness check (train through 2020, test 2021 onward).
+OUT_OF_TIME_TRAIN_MAX_YEAR = 2020
+OUT_OF_TIME_TEST_MIN_YEAR = 2021
+
 # Mine context columns joined from the Mines dataset.
 MINE_CONTEXT_COLUMNS = [
     "CURRENT_MINE_TYPE",

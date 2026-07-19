@@ -77,7 +77,7 @@ This pulls the [Accident Injuries](https://catalog.data.gov/dataset/msha-acciden
 
 Re-download raw files with `--force-download` if needed.
 
-**Verified counts (2026-07-19):** 273,614 raw accident rows, 240,641 after cleaning, 192,512 train / 48,129 test. See [PROGRESS.md](PROGRESS.md) for filtering decisions and class distribution.
+**Verified counts (2026-07-19):** 273,614 raw accident rows, 240,640 after cleaning, 192,512 train / 48,128 test. See [PROGRESS.md](PROGRESS.md) for filtering decisions, external review follow-up, and class distribution.
 
 ---
 

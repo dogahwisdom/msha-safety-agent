@@ -71,6 +71,98 @@ def test_mine_join_and_split(raw_accidents: pd.DataFrame, raw_mines: pd.DataFram
     assert set(train["DOCUMENT_NO"]).isdisjoint(set(test["DOCUMENT_NO"]))
 
 
+def test_cleaning_synthetic_hand_computed_counts() -> None:
+    """Hard-coded tiny input with expected row counts after each filter stage."""
+    frame = pd.DataFrame(
+        [
+            {
+                "DOCUMENT_NO": "1",
+                "MINE_ID": "0100001",
+                "DEGREE_INJURY_CD": "03",
+                "CAL_YR": "2010",
+                "SUBUNIT_CD": "01",
+                "CLASSIFICATION_CD": "01",
+                "OCCUPATION_CD": "100",
+                "ACTIVITY_CD": "001",
+                "INJURY_SOURCE_CD": "001",
+                "NATURE_INJURY_CD": "001",
+                "INJ_BODY_PART_CD": "001",
+                "MINING_EQUIP_CD": "01",
+                "COAL_METAL_IND": "C",
+                "ACCIDENT_TYPE_CD": "01",
+                "NARRATIVE": "Valid record kept.",
+                "ACCIDENT_DT": "01/01/2010",
+                "DEGREE_INJURY": "DAYS AWAY FROM WORK ONLY",
+            },
+            {
+                "DOCUMENT_NO": "2",
+                "MINE_ID": "0100002",
+                "DEGREE_INJURY_CD": "?",
+                "CAL_YR": "2010",
+                "SUBUNIT_CD": "01",
+                "CLASSIFICATION_CD": "01",
+                "OCCUPATION_CD": "100",
+                "ACTIVITY_CD": "001",
+                "INJURY_SOURCE_CD": "001",
+                "NATURE_INJURY_CD": "001",
+                "INJ_BODY_PART_CD": "001",
+                "MINING_EQUIP_CD": "01",
+                "COAL_METAL_IND": "C",
+                "ACCIDENT_TYPE_CD": "01",
+                "NARRATIVE": "Invalid degree removed.",
+                "ACCIDENT_DT": "01/01/2010",
+                "DEGREE_INJURY": "NO VALUE FOUND",
+            },
+            {
+                "DOCUMENT_NO": "3",
+                "MINE_ID": "0100003",
+                "DEGREE_INJURY_CD": "00",
+                "CAL_YR": "2025",
+                "SUBUNIT_CD": "01",
+                "CLASSIFICATION_CD": "01",
+                "OCCUPATION_CD": "100",
+                "ACTIVITY_CD": "001",
+                "INJURY_SOURCE_CD": "001",
+                "NATURE_INJURY_CD": "001",
+                "INJ_BODY_PART_CD": "001",
+                "MINING_EQUIP_CD": "?",
+                "COAL_METAL_IND": "C",
+                "ACCIDENT_TYPE_CD": "01",
+                "NARRATIVE": "Excluded degree code 00.",
+                "ACCIDENT_DT": "01/01/2025",
+                "DEGREE_INJURY": "ACCIDENT ONLY",
+            },
+            {
+                "DOCUMENT_NO": "4",
+                "MINE_ID": "0100004",
+                "DEGREE_INJURY_CD": "06",
+                "CAL_YR": "2015",
+                "SUBUNIT_CD": "01",
+                "CLASSIFICATION_CD": "01",
+                "OCCUPATION_CD": "100",
+                "ACTIVITY_CD": "001",
+                "INJURY_SOURCE_CD": "001",
+                "NATURE_INJURY_CD": "001",
+                "INJ_BODY_PART_CD": "001",
+                "MINING_EQUIP_CD": "?",
+                "COAL_METAL_IND": "C",
+                "ACCIDENT_TYPE_CD": "01",
+                "NARRATIVE": "Missing equip imputed to UNK.",
+                "ACCIDENT_DT": "01/01/2015",
+                "DEGREE_INJURY": "NO DYS AWY FRM WRK,NO RSTR ACT",
+            },
+        ]
+    )
+    cleaned, log = clean_accidents(frame)
+    assert len(cleaned) == 2
+    assert set(cleaned["DOCUMENT_NO"]) == {"1", "4"}
+    assert cleaned.loc[cleaned["DOCUMENT_NO"] == "4", "MINING_EQUIP_CD"].iloc[0] == "UNK"
+    removed_degree = next(e for e in log if e["step"] == "drop_invalid_degree_injury_cd")
+    assert removed_degree["rows_removed"] == 1
+    removed_excluded = next(e for e in log if e["step"] == "drop_excluded_degree_injury_cd_for_classifier")
+    assert removed_excluded["rows_removed"] == 1
+
+
 def test_ingestion_pipeline_outputs_exist_after_run() -> None:
     """Verify processed artifacts if the full ingest script has been run."""
     if not TRAIN_CSV.exists():

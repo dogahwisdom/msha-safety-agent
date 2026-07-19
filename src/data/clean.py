@@ -5,6 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 from src.data.config import (
+    CLASSIFIER_EXCLUDED_TARGET_CODES,
     CLASSIFIER_FEATURE_COLUMNS,
     CLASSIFIER_TARGET_COLUMN,
     MINE_CONTEXT_COLUMNS,
@@ -32,6 +33,8 @@ def clean_accidents(accidents: pd.DataFrame) -> tuple[pd.DataFrame, list[dict]]:
     6. Impute missing or invalid MINING_EQUIP_CD as 'UNK' rather than dropping rows.
        Over half of raw records lack equipment codes; dropping them would exceed prior study filters.
     7. Drop rows with blank NARRATIVE. Retrieval and RAG require text; empty narratives add no value.
+    8. Drop rows with DEGREE_INJURY_CD '00' (accident only). After other filters only one row
+       remained; a singleton class cannot be learned or evaluated and would add a phantom label.
     """
     log: list[dict] = []
     frame = accidents.copy()
@@ -129,11 +132,25 @@ def clean_accidents(accidents: pd.DataFrame) -> tuple[pd.DataFrame, list[dict]]:
         }
     )
 
+    excluded_degree = frame[CLASSIFIER_TARGET_COLUMN].isin(CLASSIFIER_EXCLUDED_TARGET_CODES)
+    before_keep = int(frame["_keep"].sum())
+    frame.loc[excluded_degree & frame["_keep"], "_keep"] = False
+    log.append(
+        {
+            "step": "drop_excluded_degree_injury_cd_for_classifier",
+            "rows_before": before_keep,
+            "rows_after": int(frame["_keep"].sum()),
+            "rows_removed": before_keep - int(frame["_keep"].sum()),
+            "excluded_codes": CLASSIFIER_EXCLUDED_TARGET_CODES,
+        }
+    )
+
     cleaned = frame.loc[frame["_keep"]].drop(columns=["_keep"]).copy()
     cleaned["ACCIDENT_DT"] = pd.to_datetime(cleaned["ACCIDENT_DT"], errors="coerce", format="mixed")
     cleaned["CAL_YR"] = cleaned["CAL_YR"].astype(int)
-    cleaned["DAYS_LOST"] = pd.to_numeric(cleaned["DAYS_LOST"], errors="coerce")
-    cleaned["DAYS_RESTRICT"] = pd.to_numeric(cleaned["DAYS_RESTRICT"], errors="coerce")
+    for numeric_col in ["DAYS_LOST", "DAYS_RESTRICT"]:
+        if numeric_col in cleaned.columns:
+            cleaned[numeric_col] = pd.to_numeric(cleaned[numeric_col], errors="coerce")
 
     return cleaned, log
 
