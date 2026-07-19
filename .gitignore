@@ -22,6 +22,7 @@ build/
 *.bin
 *.pt
 *.ckpt
+*.joblib
 chroma/
 .chromadb/
 *.sqlite3

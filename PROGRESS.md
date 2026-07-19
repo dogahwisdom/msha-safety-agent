@@ -2,7 +2,7 @@
 
 This file tracks the ten-step implementation loop from `docs/paper_draft.md`. Read this file first when resuming work across sessions.
 
-Last updated: 2026-07-19 (Step 1 review follow-up complete)
+Last updated: 2026-07-19 (Step 2 done)
 
 ---
 
@@ -106,9 +106,48 @@ Step 2 must select inputs via `src/data/features.py` (`select_classifier_feature
 
 ## Step 2. Classifier tool
 
-**Status:** not started
+**Status:** done
 
-**Note:** Pre-Step-2 review items complete. Will use planned feature list above, macro F1 and per-class recall, primary stratified split plus out-of-time robustness check.
+**Note:** Verified by `python -m src.tools.run_classifier` and `pytest tests/test_classifier.py` (5 passed).
+
+**Module:** `src/tools/classifier.py` (`InjuryRiskClassifier`), CLI: `python -m src.tools.run_classifier`
+
+**Model:** `RandomForestClassifier` (100 trees, `class_weight=balanced`). Inputs via `select_classifier_features()` (10 accident-side code fields). Target: `DEGREE_INJURY_CD` (10 classes, codes 01 to 10). Mine context features off by default (`--include-mine-context` optional).
+
+**Primary evaluation (stratified holdout, n_test=48,128):**
+| Metric | Value |
+|--------|-------|
+| Accuracy | 0.574 |
+| Macro F1 | 0.562 |
+| Weighted F1 | 0.565 |
+
+**Per-class recall (stratified holdout):**
+| Code | Recall | Support |
+|------|--------|---------|
+| 01 Fatality | 0.538 | 240 |
+| 02 Permanent disability | 0.809 | 491 |
+| 03 Days away only | 0.647 | 17,514 |
+| 04 Days away + restricted | 0.097 | 4,102 |
+| 05 Restricted only | 0.398 | 8,620 |
+| 06 No days away/restriction | 0.663 | 14,223 |
+| 07 Occupational illness | 0.999 | 2,108 |
+| 08 Natural causes | 0.951 | 307 |
+| 09 Non-employees | 0.298 | 114 |
+| 10 All other | 0.134 | 409 |
+
+**Out-of-time robustness (train 2000 to 2020, test 2021+, n_test=29,183):**
+| Metric | Value |
+|--------|-------|
+| Accuracy | 0.553 |
+| Macro F1 | 0.559 |
+
+Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak on both splits.
+
+**Comparison to prior MSHA studies (honest):** The paper draft cites prior work using logistic regression, deep neural networks, decision trees, and random forests on similar MSHA record counts (~228k), but does not report their published multiclass accuracy figures in the draft, and those studies often used different targets (days away from work, binary outcome, or aggregated injury classes) rather than 10-way `DEGREE_INJURY_CD` from structured codes alone. Direct numeric comparison is therefore not available without reading each primary source. On this task, accuracy (0.574) exceeds the majority-class baseline (predicting class 03 always: 0.364 on the test split) but macro F1 (0.562) reflects poor recall on several severity codes, especially 04, 09, and 10. This is comparable in spirit to prior supervised severity modeling (structured fields, similar data scale, random forest family) but not demonstrably better or worse than published benchmarks we have not yet extracted. Fatality recall (0.538) is the metric most relevant to safety officers and is moderate, not strong.
+
+**Output files:**
+- `data/processed/classifier_evaluation.json`
+- `data/processed/injury_risk_classifier.joblib`
 
 ---
 

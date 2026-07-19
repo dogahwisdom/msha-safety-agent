@@ -11,7 +11,7 @@ Instead of only predicting injury severity with a black-box classifier, the syst
 | Step | Component | Status |
 |------|-----------|--------|
 | 1 | Data acquisition and cleaning | Done |
-| 2 | Classifier tool | Not started |
+| 2 | Classifier tool | Done |
 | 3 | Trend analysis tool | Not started |
 | 4 | Narrative retrieval tool | Not started |
 | 5 | Orchestrator (LLM) | Waiting on provider choice |
@@ -88,6 +88,18 @@ pytest tests/ -v
 ```
 
 Tests require raw data under `data/raw/`. Run `python -m src.data.ingest` first if you have not downloaded the datasets.
+
+---
+
+## Classifier (Step 2)
+
+Train and evaluate the injury severity classifier:
+
+```bash
+python -m src.tools.run_classifier
+```
+
+Writes `data/processed/classifier_evaluation.json` and `data/processed/injury_risk_classifier.joblib`. Uses `select_classifier_features()` only (no leakage columns). Reports accuracy, macro F1, per-class recall, and confusion matrix on both the stratified holdout split and an out-of-time split (train through 2020, test 2021 onward).
 
 ---
 
