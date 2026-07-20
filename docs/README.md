@@ -6,4 +6,4 @@
 | [REPRODUCTION.md](REPRODUCTION.md) | Step-by-step reproduction guide |
 | [FREE_LLM_OPTIONS.md](FREE_LLM_OPTIONS.md) | Groq, Ollama, and offline LLM setup (no paid API required) |
 | [FAILURE_ANALYSIS.md](FAILURE_ANALYSIS.md) | Benchmark failure categories and examples |
-| [PROGRESS.md](PROGRESS.md) | Implementation tracker (Steps 1–10) |
+| [IMPLEMENTATION.md](IMPLEMENTATION.md) | Pipeline implementation log (Steps 1–10) |

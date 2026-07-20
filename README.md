@@ -102,7 +102,7 @@ msha-safety-agent/
 ├── notebooks/          Reproducible Jupyter workflow (Steps 1–6)
 ├── benchmark/          60 questions + reference answers
 ├── eval/               Benchmark runner, scoring, human-eval materials
-├── docs/               Paper draft, reproduction guide, progress tracker
+├── docs/               Paper, reproduction guide, implementation log
 ├── tests/              Unit tests
 └── scripts/setup.sh    Resumable environment setup
 ```
@@ -116,7 +116,7 @@ msha-safety-agent/
 | [docs/paper_draft.md](docs/paper_draft.md) | Working paper with results |
 | [docs/REPRODUCTION.md](docs/REPRODUCTION.md) | Full reproduction checklist |
 | [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md) | Free LLM setup guide |
-| [docs/PROGRESS.md](docs/PROGRESS.md) | Step-by-step implementation tracker |
+| [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) | Pipeline implementation log |
 
 ---
 

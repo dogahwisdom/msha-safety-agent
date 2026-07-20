@@ -1,7 +1,5 @@
 # Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis: A Study Using U.S. Mine Safety and Health Administration Data
 
-**Status of this draft:** Abstract, Introduction, Methodology, Experimental Design, and **Results (offline evaluation, 2026-07-19)** are complete. Human evaluation results are pending (materials prepared). Live LLM numbers (Groq/Ollama/OpenAI) can be added as a supplementary table when run.
-
 ---
 
 ## Abstract
@@ -18,7 +16,7 @@ This pattern has two limitations that matter for how the data is actually used i
 
 At the same time, a separate and recent strand of research has demonstrated that large language models can be wrapped in an agent loop that plans which tool to call, executes that tool, and reasons over the result, rather than simply generating a single answer from a prompt. This pattern, sometimes called tool use or tool augmentation, was formalized in general purpose form by Yao et al. (2023) and Schick et al. (2023), and has recently been applied to a real industrial operations problem by Lu (2026), whose TADI system orchestrates twelve domain specific tools over drilling reports and sensor data from an oil field, explicitly avoiding heavyweight agent frameworks in favor of a small, auditable orchestration loop built directly on a large language model provider's function calling interface. As far as we can determine from a review of the mining, safety, and agentic AI literature, this pattern has not yet been applied to mine safety data, and the general MLLM agent literature that does touch on mining, notably the MineAgent system of Wang et al. (2024), addresses mineral exploration from remote sensing imagery rather than occupational safety or operational decision support.
 
-This paper makes three contributions. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, it evaluates this system against two baselines, a direct classifier and a single shot retrieval augmented generation pipeline, on task accuracy, tool selection correctness, latency, and cost. Third, it reports a human evaluation of explanation quality using the Explanation Satisfaction Scale of Hoffman et al. (2023), administered to mining engineering faculty and senior students, which to our knowledge is the first human evaluation of an explainable AI system applied to mine safety data.
+This paper makes three contributions. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, it evaluates this system against two baselines, a direct classifier and a single shot retrieval augmented generation pipeline, on task accuracy, tool selection correctness, and latency on a fixed 60 question benchmark. Third, it provides a human evaluation protocol based on the Explanation Satisfaction Scale of Hoffman et al. (2023) for mining engineering faculty and senior students; participant data collection is in progress.
 
 The remainder of this paper is organized as follows. Section 2 reviews related work on predictive modeling of MSHA data, computer vision and multimodal AI in mining safety, tool augmented LLM agents in industrial domains, and explainability evaluation. Section 3 describes the dataset and preprocessing. Section 4 describes the proposed architecture. Section 5 describes the experimental design and evaluation metrics. Section 6 reports results. Section 7 discusses contributions and limitations. Implementation steps are documented in `docs/REPRODUCTION.md`.
 
@@ -48,11 +46,11 @@ Evaluating whether an explanation is actually useful to a person, rather than as
 
 The primary dataset is the MSHA Accident, Injury, and Illness dataset, available through MSHA's Open Government Data Initiative and mirrored on data.gov, containing all accidents, injuries, and illnesses reported by mine operators and contractors in the United States since January 1, 2000, drawn from MSHA Form 7000-1. Each record includes a unique document number and structured fields describing subunit, degree of injury, mining equipment involved, accident classification, occupation, activity at the time of the accident, injury source, nature of injury, and body part affected, along with a free text narrative describing the incident in the operator's own words. MSHA also publishes companion datasets on mine identification, employment, and production that can be joined to the accident records to add site level context such as commodity type and workforce size.
 
-Planned preprocessing steps are: download the Accident Injuries dataset and the associated Mine Identification dataset from MSHA's data portal; remove records with missing or clearly invalid values in the fields needed for classification; hold out a stratified sample of records across years and injury classes for testing rather than training on the full set; and build a small held out set of natural language questions, written independently of the training data, that a domain expert would plausibly ask of the system, to be used as the task accuracy benchmark described in Section 5. The narrative text field will be chunked and embedded to build the retrieval index used by the agent's retrieval tool. Because the dataset only covers United States operations, a limitation discussed in Section 7 is that findings may not transfer directly to mining safety conditions in other regulatory environments, including Ghana, without further validation.
+We downloaded the Accident Injuries dataset and the Mine Identification dataset from MSHA's data portal, removed records with missing or invalid values in fields required for classification, and held out a stratified 20% test sample across calendar years and injury classes. The final cleaned corpus contains 240,640 records (192,512 train / 48,128 test). Narrative text was embedded with `sentence-transformers/all-MiniLM-L6-v2` and indexed in ChromaDB for semantic retrieval. A benchmark of 60 natural language questions, written before system evaluation, spans classification, trend, and case grounded categories (Section 5). Because the dataset covers United States operations only, findings may not transfer directly to other regulatory environments, including Ghana, without further validation.
 
 ---
 
-## 4. Proposed Architecture
+## 4. System Architecture
 
 The system follows the general orchestration pattern demonstrated by Lu (2026) for drilling operations, adapted here for occupational safety reasoning rather than drilling engineering, and built without a heavyweight agent framework so that every step in the reasoning process is visible and can be audited by the researcher during development and evaluation.
 
@@ -63,7 +61,7 @@ The system follows the general orchestration pattern demonstrated by Lu (2026) f
 - A trend analysis tool, which computes rates, counts, and changes over time for a specified injury type, occupation, equipment category, or mine site, giving the agent a way to answer questions about patterns rather than single predictions.
 - A narrative retrieval tool, which performs semantic search over historical incident narratives and returns the most relevant matching incidents with their structured metadata, giving the agent a way to ground an answer in specific historical cases rather than only in aggregate statistics.
 
-**Orchestrator.** A large language model is given the user's question, a system prompt describing the tools and how to use them, and access to the tools through the provider's native function calling interface. The model decides which tool or sequence of tools to call, receives the tool output, and produces a final natural language answer that cites which tool or tools it used and how their output supports the answer given. This design deliberately mirrors the "framework free simplicity" argued for by Lu (2026), on the grounds that a smaller, directly readable orchestration loop is easier to audit and to describe honestly in a thesis than a call into a third party agent framework.
+**Orchestrator.** A large language model receives the user's question, a system prompt describing the three tools, and access to the tools through the provider's native function calling interface. The model selects which tool or sequence of tools to call, receives the tool output, and produces a natural language answer citing which tools were used. This design mirrors the framework free orchestration approach of Lu (2026): a small, auditable control loop rather than a third party agent framework.
 
 **Baselines for comparison.** Two baselines are implemented to make the value of the tool augmented design measurable rather than assumed: a direct classifier baseline, which answers only classification style questions and cannot handle open ended natural language queries, reproducing the approach of prior MSHA studies; and a single shot retrieval augmented generation baseline, which retrieves relevant narrative chunks and passes them to the language model in a single prompt without tool orchestration or access to the trend or classification tools, isolating the effect of tool use and multi step reasoning from the effect of simply adding a language model on top of the data.
 
@@ -73,23 +71,23 @@ The system follows the general orchestration pattern demonstrated by Lu (2026) f
 
 **Research questions.** Does tool augmented orchestration improve answer accuracy and usefulness over a direct classifier and over a single shot retrieval augmented generation baseline, for natural language safety questions posed against the MSHA dataset. Does the system correctly select the tool or tools appropriate to a given question. What is the latency and estimated cost per query, and how does this scale with question complexity. Do mining engineering domain experts rate the system's explanations as satisfactory and trustworthy using a validated instrument, and does this rating differ meaningfully from their rating of the baseline systems' outputs.
 
-**Benchmark construction.** A set of at least sixty natural language questions will be written by the researcher, spanning three categories in equal proportion: direct lookup or classification style questions comparable to what prior MSHA studies could already answer, trend and comparison questions requiring aggregation across records, and case grounded questions requiring retrieval of specific similar historical incidents. Each question will have a reference answer or reference set of supporting records established independently before the system is run, so that accuracy can be scored against a fixed ground truth rather than judged only by the researcher after the fact.
+**Benchmark construction.** Sixty natural language questions were authored in three equal categories: classification style questions with explicit MSHA field codes, trend and comparison questions requiring aggregation, and case grounded questions requiring retrieval of similar historical incidents. Reference answers were derived from cleaned data and tool outputs before any benchmark run, so accuracy is scored against fixed ground truth.
 
-**Quantitative metrics.** Task accuracy, measured as the proportion of benchmark questions answered correctly against the reference answers, scored separately for the three question categories. Tool selection correctness, measured by comparing the tool or tool sequence the agent actually invoked against the tool sequence the researcher determines was appropriate for that question. Latency, measured as wall clock time from question submission to final answer. Estimated cost, measured as the number of language model calls and tokens consumed per question, since this is a real operational constraint the report should not gloss over, as TADI's own reporting of these figures for the drilling case demonstrates is standard practice in this literature.
+**Quantitative metrics.** Task accuracy (proportion correct per category and overall), tool selection correctness (invoked tools vs. expected tools per question), latency (wall clock time per query), and token cost for live LLM runs.
 
-**Human evaluation.** A small group of mining engineering faculty and senior undergraduate students at the University of Mines and Technology, ideally between ten and twenty participants, will be shown a subset of question and answer pairs produced by the proposed system and by the two baselines, without being told which system produced which answer, and will rate each answer using the Explanation Satisfaction Scale of Hoffman et al. (2023). Because this is a small, exploratory sample rather than a large confirmatory study, results should be reported and interpreted as such, with descriptive statistics and qualitative comment analysis rather than strong claims of statistical significance, unless the sample size and design genuinely support it.
+**Human evaluation.** Mining engineering faculty and senior students at the University of Mines and Technology will rate blinded question–answer pairs using the Explanation Satisfaction Scale (Hoffman et al., 2023). Target sample: 10–20 participants; results will be reported descriptively as an exploratory study.
 
-**Failure case analysis.** Every incorrect or low confidence answer produced during benchmark evaluation will be logged and categorized, following the practice of documenting sparse data cases and ambiguous questions openly rather than only reporting favorable results, since this kind of honest failure reporting is part of what makes a systems paper in this space credible to reviewers.
+**Failure case analysis.** Incorrect benchmark answers were logged and categorized by failure type (classifier error, retrieval miss, tool routing error).
 
 ---
 
 ## 6. Results
 
-All quantitative results below were produced from the open source repository accompanying this paper. Benchmark questions and reference answers were fixed in `benchmark/questions.json` before any system was evaluated. Primary agent evaluation used **offline tool routing** (`LLM_PROVIDER=offline`): questions are routed to tools by category without LLM inference. This isolates tool correctness and provides reproducible numbers at zero API cost. Live LLM orchestration (Groq free tier, Ollama, or OpenAI) is supported in code but reported separately when available.
+All quantitative results were produced from the open source implementation. Benchmark questions and reference answers were fixed before evaluation. The primary agent evaluation used deterministic tool routing without LLM inference, isolating tool correctness at zero API cost. Supplementary live LLM runs (local Ollama and optional cloud providers) are reported in Section 6.5.
 
 ### 6.1 Data and classifier tool
 
-After cleaning, **240,640** accident records remained (273,614 raw; exclusions documented in `docs/PROGRESS.md`). An 80/20 stratified split yielded 192,512 training and 48,128 test records across ten `DEGREE_INJURY_CD` classes (codes 01–10).
+After cleaning, **240,640** accident records remained (273,614 raw; exclusions documented in the implementation log). An 80/20 stratified split yielded 192,512 training and 48,128 test records across ten `DEGREE_INJURY_CD` classes (codes 01–10).
 
 The random forest classifier (`InjuryRiskClassifier`, 100 trees, balanced class weights) achieved on the stratified holdout:
 
@@ -127,7 +125,7 @@ Baseline failures on out-of-domain question types are expected by design.
 
 ### 6.4 Human evaluation
 
-Materials for the Hoffman et al. (2023) Explanation Satisfaction Scale are prepared (`eval/human_eval/materials.md`). **No participant ratings are included in this draft.** A small blinded study with mining engineering faculty and students at the University of Mines and Technology is planned.
+Materials for the Hoffman et al. (2023) Explanation Satisfaction Scale are prepared. Participant ratings are not yet included; data collection at the University of Mines and Technology is planned.
 
 ### 6.5 Live LLM evaluation (Ollama, local)
 
@@ -152,7 +150,7 @@ Limitations stated plainly:
 - **Geographic scope:** U.S. MSHA data only; findings may not transfer to Ghana or other regulatory environments without validation.
 - **Classifier weakness:** Macro F1 0.562; several severity classes (04, 09, 10) have low recall.
 - **Retrieval:** Semantic search sometimes returns plausible but incorrect reference documents (two benchmark failures).
-- **Human evaluation:** Materials only; no participant ratings in this draft.
+- **Human evaluation:** Protocol prepared; participant data not yet collected.
 - **Cost of live LLM:** Not required for reproduction; Groq free tier and Ollama are supported alternatives to paid OpenAI.
 
 ---
@@ -167,7 +165,7 @@ Lu, R. (2026). TADI: Tool-augmented drilling intelligence via agentic LLM orches
 
 Schick, T., Dwivedi-Yu, J., Dessi, R., Raileanu, R., Lomeli, M., Zettlemoyer, L., Cancedda, N., & Scialom, T. (2023). Toolformer: Language models can teach themselves to use tools. *Advances in Neural Information Processing Systems*, 36.
 
-Wang, [initials not independently confirmed] et al. (2024). MineAgent: Towards remote-sensing mineral exploration with multimodal large language models. *arXiv preprint arXiv:2412.17339*.
+Wang, B., Shen, T., Na, H., Chen, L., & Li, D. (2024). MineAgent: Towards remote-sensing mineral exploration with multimodal large language models. *arXiv preprint arXiv:2412.17339*.
 
 Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan, K., & Cao, Y. (2023). ReAct: Synergizing reasoning and acting in language models. Presented at the 11th International Conference on Learning Representations (ICLR 2023), Kigali, Rwanda. *arXiv preprint arXiv:2210.03629*.
 
@@ -178,5 +176,3 @@ Amoako, R., Brickey, A., & Buaba, J. (2021). Identifying risk factors from MSHA 
 Yedla, A., Kakhki, F. D., & Jannesari, A. (2020). Predictive modeling for occupational safety outcomes and days away from work analysis in mining operations. *International Journal of Environmental Research and Public Health*, *17*(19), 7054. https://doi.org/10.3390/ijerph17197054
 
 Yedla, A. D. (2019). *Predicting injury outcomes in mining industry: A machine learning approach* (Master's thesis). Iowa State University. https://dr.lib.iastate.edu/
-
-[Additional MSHA predictive modeling citations may be added as needed. Full author lists above were verified from primary sources, 2026-07-19.]

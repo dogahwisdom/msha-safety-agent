@@ -53,7 +53,7 @@ python -m ipykernel install --user --name=msha-safety-agent --display-name="MSHA
 
 if [ ! -f .env ] && [ -f .env.example ]; then
   cp .env.example .env
-  echo "==> Created .env from .env.example (add OPENAI_API_KEY for agent notebooks)"
+  echo "==> Created .env from .env.example (configure LLM provider — see docs/FREE_LLM_OPTIONS.md)"
 fi
 
 echo ""

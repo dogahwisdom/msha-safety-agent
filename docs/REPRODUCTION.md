@@ -99,7 +99,7 @@ After a full run:
 
 None of these are committed (see `.gitignore`).
 
-## Verified metrics (Step 2, stratified holdout)
+## Reference metrics (classifier, stratified holdout)
 
 These numbers come from `data/processed/classifier_evaluation.json` after running Step 2:
 
@@ -107,7 +107,7 @@ These numbers come from `data/processed/classifier_evaluation.json` after runnin
 - Macro F1: 0.562
 - Fatality (code 01) recall: 0.538
 
-See `docs/PROGRESS.md` for full per-class recall and out-of-time split results.
+See `docs/IMPLEMENTATION.md` for full per-class recall and out-of-time split results.
 
 ## Benchmark review gate
 
@@ -115,7 +115,7 @@ Step 7 builds `benchmark/questions.json` before any system is evaluated on it. R
 
 ## Human evaluation (Step 10)
 
-Materials only: `eval/human_eval/materials.md` and `eval/human_eval/build_stimuli.py`. The repository does not include simulated participant ratings.
+Protocol and stimulus builder: `eval/human_eval/materials.md`, `eval/human_eval/build_stimuli.py`.
 
 ## Troubleshooting
 

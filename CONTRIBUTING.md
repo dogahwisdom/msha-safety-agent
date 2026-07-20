@@ -12,7 +12,7 @@ Thank you for your interest in this research project.
 
 - Keep changes focused — one logical change per PR.
 - Run `make test` before opening a PR.
-- Update `docs/PROGRESS.md` if you complete a pipeline step or change verified metrics.
+- Update `docs/IMPLEMENTATION.md` if you change verified pipeline metrics.
 - Do not commit secrets (`.env`), raw MSHA dumps, or local artifacts (`data/processed/`, `eval/results/`).
 
 ## Reporting issues

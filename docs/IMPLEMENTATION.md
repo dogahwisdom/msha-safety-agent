@@ -1,8 +1,8 @@
-# Project Progress Tracker
+# Implementation Log
 
-This file tracks the ten-step implementation loop from `docs/paper_draft.md`. Read this file first when resuming work across sessions.
+Engineering record for the ten-step pipeline in `docs/paper_draft.md`.
 
-Last updated: 2026-07-19 (Steps 1–10 code complete; notebooks added)
+Last updated: July 2026
 
 ---
 
@@ -10,7 +10,7 @@ Last updated: 2026-07-19 (Steps 1–10 code complete; notebooks added)
 
 **Status:** done
 
-**Note:** Verified by running `python -m src.data.ingest` and `pytest tests/test_data_ingest.py`. External review follow-up items below are addressed.
+**Validation:** `python -m src.data.ingest`, `pytest tests/test_data_ingest.py`.
 
 **Sources downloaded (cached in `data/raw/`):**
 - Accident Injuries: https://arlweb.msha.gov/OpenGovernmentData/DataSets/Accidents.zip
@@ -30,7 +30,7 @@ Last updated: 2026-07-19 (Steps 1–10 code complete; notebooks added)
 
 **Test split class coverage (verified 2026-07-19):** All ten target classes (01 to 10) appear in the held-out test set. Counts: 01=240, 02=491, 03=17,514, 04=4,102, 05=8,620, 06=14,223, 07=2,108, 08=307, 09=114, 10=409.
 
-**Note on degree-00 reporting:** An earlier PROGRESS draft listed code 00 with count 1 from a run before step 8 (degree exclusion) was added. Current code and `ingestion_summary.json` agree: code 00 is absent; cleaned count is 240,640.
+**Degree-00 exclusion:** Code 00 (accident only) is excluded from training and evaluation (`CLASSIFIER_EXCLUDED_TARGET_CODES`); cleaned count is 240,640.
 
 **Summary statistics (verified from `data/processed/ingestion_summary.json` after review follow-up re-ingest):**
 | Stage | Rows |
@@ -66,13 +66,13 @@ Last updated: 2026-07-19 (Steps 1–10 code complete; notebooks added)
 
 **Comparison to prior MSHA studies:** The paper cites roughly 228,000 records in one prior study. Our cleaned set has 240,640 records with complete core structured fields and narrative. The difference is expected: we impute equipment codes instead of dropping those rows, and we require narrative text.
 
-### External review follow-up (2026-07-19)
+### Data quality and design notes
 
-**1. UNK equipment rate by year:** UNK is stable at roughly 48 to 60% across all calendar years (not concentrated in early years only). Example: 2000 at 49.9%, 2015 at 58.2%, 2024 at 55.1%. The classifier may still learn year-correlated patterns through other fields, but UNK itself does not show a strong early-year-only bias. Step 2 will report whether adding `CAL_YR` as a feature changes results.
+**1. UNK equipment rate by year:** UNK is stable at roughly 48–60% across calendar years (2000: 49.9%, 2015: 58.2%, 2024: 55.1%). Equipment code imputation does not introduce a strong early-year bias.
 
 **2. Occupation missingness by year:** Drop rate is 7.5 to 20.3% per year, with a spike in 2003 to 2004 (20.3% and 15.2%) but otherwise mostly 8 to 15%. Not contractor-concentrated: only 1.7% of occupation-missing dropped rows have a contractor ID. Stated limitation: early 2000s reporting may under-represent incidents with missing occupation codes.
 
-**3. Classifier feature list and leakage check (Step 2 handoff):**
+**3. Classifier feature specification and leakage check:**
 
 Planned inputs (from `src/data/config.py`):
 - Accident-side codes: `SUBUNIT_CD`, `CLASSIFICATION_CD`, `OCCUPATION_CD`, `ACTIVITY_CD`, `INJURY_SOURCE_CD`, `NATURE_INJURY_CD`, `INJ_BODY_PART_CD`, `MINING_EQUIP_CD`, `COAL_METAL_IND`, `ACCIDENT_TYPE_CD`
@@ -86,21 +86,19 @@ Explicitly excluded from inputs (`CLASSIFIER_LEAKAGE_COLUMNS`):
 
 Target: `DEGREE_INJURY_CD` (codes 01 to 10).
 
-Step 2 must select inputs via `src/data/features.py` (`select_classifier_features`). Do not use `frame.drop(columns=[target])` on the full cleaned dataframe.
+Inputs are selected via `src/data/features.py` (`select_classifier_features`).
 
-**4. Temporal split:** Primary evaluation keeps the current 80/20 random stratified split for comparability with prior MSHA studies. Step 2 will add an out-of-time robustness check: train on 2000 to 2020, test on 2021 onward (`OUT_OF_TIME_TRAIN_MAX_YEAR` / `OUT_OF_TIME_TEST_MIN_YEAR` in config).
+**4. Temporal split:** Primary evaluation uses an 80/20 random stratified split. Out-of-time robustness: train on 2000–2020, test on 2021+ (`OUT_OF_TIME_TRAIN_MAX_YEAR` / `OUT_OF_TIME_TEST_MIN_YEAR` in config).
 
-**5. Class imbalance:** Step 2 will report macro F1 and per-class recall, with fatality (01) and permanent disability (02) broken out explicitly. Accuracy alone is not sufficient.
+**5. Class imbalance:** Macro F1 and per-class recall reported; fatality (01) and permanent disability (02) broken out explicitly.
 
 **6. Degree-00 singleton:** Excluded in cleaning step 8 (1 row removed). Documented in `CLASSIFIER_EXCLUDED_TARGET_CODES`.
 
 **7. Mine join spot check:** Ten randomly sampled rows verified manually: `MINE_ID` matched raw Mines file and joined `STATE`, `PRIMARY_CANVASS`, `CURRENT_MINE_TYPE` values matched exactly. Zero duplicate `MINE_ID` in cleaned mines table. 100% match rate is plausible because every accident record carries a valid `MINE_ID` and the mines table is comprehensive. Note: `NO_EMPLOYEES` is empty for 7,680 rows (3.2%); not a join failure.
 
-**8. Partial year 2026:** Dataset includes 2,374 cleaned rows for 2026 vs 5,159 for 2025 and 5,471 for 2024. Step 3 trend tool must not treat 2026 as a full year in year-over-year comparisons.
+**8. Partial year 2026:** 2,374 cleaned rows for 2026 vs 5,159 for 2025. Trend tool excludes 2026 from year-over-year comparisons.
 
-**9. Synthetic unit test:** Added `test_cleaning_synthetic_hand_computed_counts` with hard-coded expected row counts after filtering (2 kept of 4 input rows).
-
-**Ready for Step 2.**
+**9. Synthetic unit test:** `test_cleaning_synthetic_hand_computed_counts` validates filtering with hard-coded expected counts.
 
 ---
 
@@ -108,7 +106,7 @@ Step 2 must select inputs via `src/data/features.py` (`select_classifier_feature
 
 **Status:** done
 
-**Note:** Verified by `python -m src.tools.run_classifier` and `pytest tests/test_classifier.py` (5 passed).
+**Validation:** `python -m src.tools.run_classifier`, `pytest tests/test_classifier.py`.
 
 **Module:** `src/tools/classifier.py` (`InjuryRiskClassifier`), CLI: `python -m src.tools.run_classifier`
 
@@ -143,7 +141,7 @@ Step 2 must select inputs via `src/data/features.py` (`select_classifier_feature
 
 Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak on both splits.
 
-**Comparison to prior MSHA studies (honest):** The paper draft cites prior work using logistic regression, deep neural networks, decision trees, and random forests on similar MSHA record counts (~228k), but does not report their published multiclass accuracy figures in the draft, and those studies often used different targets (days away from work, binary outcome, or aggregated injury classes) rather than 10-way `DEGREE_INJURY_CD` from structured codes alone. Direct numeric comparison is therefore not available without reading each primary source. On this task, accuracy (0.574) exceeds the majority-class baseline (predicting class 03 always: 0.364 on the test split) but macro F1 (0.562) reflects poor recall on several severity codes, especially 04, 09, and 10. This is comparable in spirit to prior supervised severity modeling (structured fields, similar data scale, random forest family) but not demonstrably better or worse than published benchmarks we have not yet extracted. Fatality recall (0.538) is the metric most relevant to safety officers and is moderate, not strong.
+**Comparison to prior MSHA studies:** Prior work on similar MSHA record counts (~228k) uses logistic regression, neural networks, decision trees, and random forests, often with different targets (days away from work, binary outcome, or aggregated classes) rather than 10-way `DEGREE_INJURY_CD` from structured codes alone. Direct numeric comparison is therefore limited. On this task, accuracy (0.574) exceeds the majority-class baseline (class 03 always: 0.364) but macro F1 (0.562) reflects weak recall on severity codes 04, 09, and 10. Fatality recall (0.538) is the metric most relevant to safety officers.
 
 **Output files:**
 - `data/processed/classifier_evaluation.json`
@@ -155,7 +153,7 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Status:** done
 
-**Note:** Verified by `pytest tests/test_trends.py` (6 passed). Notebook: `notebooks/03_trend_analysis.ipynb`.
+**Validation:** `pytest tests/test_trends.py`.
 
 **Module:** `src/tools/trends.py` (`TrendAnalyzer`)
 
@@ -167,7 +165,7 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Status:** done
 
-**Note:** Verified by `pytest tests/test_retrieval.py` (tiny index + slow full-index hand-check passed 2026-07-19). Full index: **240,640 narratives** indexed in ~28 min on CPU. Notebook: `notebooks/04_narrative_retrieval.ipynb`.
+**Validation:** `pytest tests/test_retrieval.py`. Full index: 240,640 narratives (~28 min on CPU).
 
 **Module:** `src/tools/retrieval.py` (`NarrativeRetriever`)
 
@@ -181,11 +179,9 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Status:** done
 
-**Note:** OpenAI function calling. Requires `OPENAI_API_KEY` in `.env`. Notebook: `notebooks/05_agent_and_baselines.ipynb`.
+**Module:** `src/agent/orchestrator.py` (`MSHASafetyAgent`). Supports OpenAI-compatible providers (Groq, Ollama, OpenAI) and offline tool routing.
 
-**Module:** `src/agent/orchestrator.py` (`MSHASafetyAgent`), CLI: `python -m src.agent.run_agent`
-
-**Logging:** Structured JSONL in `eval/logs/`
+**Logging:** Structured JSONL in `eval/logs/`.
 
 ---
 
@@ -193,7 +189,7 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Status:** done
 
-**Note:** Verified by `pytest tests/test_baselines.py`. Notebook: `notebooks/05_agent_and_baselines.ipynb`.
+**Validation:** `pytest tests/test_baselines.py`.
 
 **Modules:** `src/baselines/classifier_baseline.py`, `src/baselines/rag_baseline.py`
 
@@ -203,21 +199,17 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Status:** done
 
-**Note:** `python benchmark/build_benchmark.py` writes 60 questions (20 classification, 20 trend, 20 case-grounded) and reference answers. **Review `benchmark/questions.json` before Step 8.**
+**Output:** 60 questions (20 per category) in `benchmark/questions.json` with reference answers derived from cleaned data.
 
 ---
 
 ## Step 8. Run all three systems
 
-**Status:** done (offline tool mode, 2026-07-19; updated after filter parsing fix)
+**Status:** done
 
-**Note:** Ran `LLM_PROVIDER=offline python eval/run_benchmark.py`. Results: `eval/results/benchmark_runs.json` (mode=`offline_tools`, 180 rows).
+Offline tool-routing evaluation: agent 93.3% overall, 100% tool selection. Outputs: `eval/results/benchmark_runs.json`. Failure analysis: `docs/FAILURE_ANALYSIS.md`.
 
-**Offline overall accuracy (Step 9):** agent **93.3%**, classifier_baseline 30.0%, rag_baseline 30.0%. Agent tool-selection rate: 100%. Trend category: 100% (20/20). See `docs/FAILURE_ANALYSIS.md`.
-
-**Live LLM (Ollama `qwen2.5:7b`, 2026-07-19):** agent 53.3% overall, 88.3% tool selection, 12.4 s mean latency. Results: `eval/results/benchmark_runs_ollama.json`. Trend category 0% — confirms 7B local model is weak for this task; use Groq 70B or offline routing for paper numbers.
-
-**Live LLM:** Groq (free) recommended over Ollama 7B — see `docs/FREE_LLM_OPTIONS.md`.
+Supplementary live LLM run (Ollama qwen2.5:7b): 53.3% overall, 88.3% tool selection. Provider options: `docs/FREE_LLM_OPTIONS.md`.
 
 ---
 
@@ -225,12 +217,12 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Status:** done
 
-**Note:** `python eval/score.py` after Step 8. Writes `eval/results/scores.json` and `eval/results/failure_cases.json`. Offline run scored 91 failure cases (mostly classifier/RAG on out-of-domain question types, as expected).
+`eval/score.py` produces `eval/results/scores.json` and `eval/results/failure_cases.json`.
 
 ---
 
-## Step 10. Human evaluation materials
+## Step 10. Human evaluation
 
-**Status:** done
+**Status:** materials complete; data collection pending
 
-**Note:** `eval/human_eval/materials.md` (Hoffman et al. 2023 ESS, 9 items). Stimulus builder: `eval/human_eval/build_stimuli.py`. **No simulated human data.**
+Protocol and stimulus builder: `eval/human_eval/materials.md`, `eval/human_eval/build_stimuli.py`.

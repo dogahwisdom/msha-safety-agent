@@ -49,7 +49,7 @@ CLASSIFIER_TARGET_COLUMN = "DEGREE_INJURY_CD"
 CLASSIFIER_EXCLUDED_TARGET_CODES = ["00"]
 
 # Structured fields that must NOT be used as classifier inputs (leakage or post-outcome data).
-# See docs/PROGRESS.md Step 2 handoff for rationale against MSHA Part 50 field definitions.
+# Classifier inputs — see docs/IMPLEMENTATION.md for feature specification and leakage exclusions.
 CLASSIFIER_LEAKAGE_COLUMNS = [
     "DEGREE_INJURY_CD",
     "DEGREE_INJURY",

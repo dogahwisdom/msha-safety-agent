@@ -1,4 +1,4 @@
-"""Safe column selection for classifier training (Step 2 handoff)."""
+"""Feature selection for classifier training (leakage-safe columns only)."""
 
 from __future__ import annotations
 

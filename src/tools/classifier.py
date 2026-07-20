@@ -36,8 +36,7 @@ from src.data.features import select_classifier_features, select_classifier_targ
 CLASSIFIER_REPORT_JSON = PROCESSED_DIR / "classifier_evaluation.json"
 CLASSIFIER_MODEL_PATH = PROCESSED_DIR / "injury_risk_classifier.joblib"
 
-# Prior studies in the paper draft used random forests among other models; 100 trees is a
-# standard baseline scale for tabular injury data without claiming hyperparameter tuning.
+# RandomForest with 100 trees — standard baseline for tabular MSHA severity modeling.
 DEFAULT_N_ESTIMATORS = 100
 
 

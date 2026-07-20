@@ -13,7 +13,7 @@ Each notebook imports logic from `src/` (no duplicated pipeline code). Run noteb
 | [05_agent_and_baselines.ipynb](05_agent_and_baselines.ipynb) | 5–6 | Agent orchestrator and baselines (LLM key required) |
 | [06_benchmark_evaluation.ipynb](06_benchmark_evaluation.ipynb) | 7–9 | Benchmark, runs, scoring |
 
-Step 10 human evaluation materials are in `eval/human_eval/` (survey protocol, not simulated data).
+Human evaluation protocol: `eval/human_eval/` (survey materials and stimulus builder).
 
 ## Quick start
 
