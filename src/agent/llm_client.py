@@ -67,7 +67,7 @@ def get_llm_client() -> Any:
     raise RuntimeError(
         "No LLM configured. Options: GROQ_API_KEY (free at console.groq.com), "
         "OPENAI_API_KEY, or local Ollama (OLLAMA_MODEL=qwen2.5:7b). "
-        "Set LLM_PROVIDER=offline to force tool-only benchmark runs. See .env.example."
+        "Set LLM_PROVIDER=offline to force offline benchmark runs. See .env.example."
     )
 
 

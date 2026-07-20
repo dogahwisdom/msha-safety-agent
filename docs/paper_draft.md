@@ -116,7 +116,7 @@ Mean latency: agent 0.26 s, classifier baseline 0.18 s, retrieval baseline 0.03 
 
 ### 6.3 Failure analysis
 
-Four agent failures occurred (see `docs/FAILURE_ANALYSIS.md`):
+Four agent failures occurred:
 
 1. **Two classification errors (CLS-03, CLS-14):** classifier predicted degree code 03 instead of the reference code — a model accuracy issue, not a routing failure.
 2. **Two retrieval errors (CASE-14, CASE-15):** semantically similar narratives were retrieved but the reference document was not in the top five results.
@@ -136,7 +136,7 @@ A supplementary run used **Ollama** with `qwen2.5:7b` on the same 60 question be
 | Live LLM agent (Ollama) | 53.3% | 88.3% | 12.4 s |
 | Offline tool agent | **93.3%** | **100%** | 0.26 s |
 
-The smaller local model struggled on trend questions (0% accuracy) and misread some tool outputs. **Groq's free `llama-3.3-70b-versatile` tier is recommended** over local 7B models for live function calling; see `docs/FREE_LLM_OPTIONS.md`.
+The smaller local model struggled on trend questions (0% accuracy) and misread some tool outputs. Llama 3.3 70B via Groq is recommended over local 7B models for live function calling; see `docs/REPRODUCTION.md`.
 
 ---
 

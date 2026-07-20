@@ -81,7 +81,7 @@ Or use Jupyter: `make notebook` → run notebooks `01`–`06` in order.
 | **Ollama** | Free local | `ollama pull qwen2.5:7b` |
 | OpenAI | Paid | `OPENAI_API_KEY` |
 
-See [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md).
+See [docs/REPRODUCTION.md](docs/REPRODUCTION.md) for provider setup.
 
 ```bash
 cp .env.example .env
@@ -102,7 +102,7 @@ msha-safety-agent/
 ├── notebooks/          Reproducible Jupyter workflow (Steps 1–6)
 ├── benchmark/          60 questions + reference answers
 ├── eval/               Benchmark runner, scoring, human-eval materials
-├── docs/               Paper, reproduction guide, implementation log
+├── docs/               Paper and reproduction guide
 ├── tests/              Unit tests
 └── scripts/setup.sh    Resumable environment setup
 ```
@@ -113,10 +113,8 @@ msha-safety-agent/
 
 | Document | Description |
 |----------|-------------|
-| [docs/paper_draft.md](docs/paper_draft.md) | Working paper with results |
-| [docs/REPRODUCTION.md](docs/REPRODUCTION.md) | Full reproduction checklist |
-| [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md) | Free LLM setup guide |
-| [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) | Pipeline implementation log |
+| [docs/paper_draft.md](docs/paper_draft.md) | Paper — methodology and results |
+| [docs/REPRODUCTION.md](docs/REPRODUCTION.md) | Reproduction, LLM setup, and metrics |
 
 ---
 

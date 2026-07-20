@@ -49,7 +49,7 @@ CLASSIFIER_TARGET_COLUMN = "DEGREE_INJURY_CD"
 CLASSIFIER_EXCLUDED_TARGET_CODES = ["00"]
 
 # Structured fields that must NOT be used as classifier inputs (leakage or post-outcome data).
-# Classifier inputs — see docs/IMPLEMENTATION.md for feature specification and leakage exclusions.
+# Classifier inputs — see src/data/features.py and docs/paper_draft.md Section 3.
 CLASSIFIER_LEAKAGE_COLUMNS = [
     "DEGREE_INJURY_CD",
     "DEGREE_INJURY",

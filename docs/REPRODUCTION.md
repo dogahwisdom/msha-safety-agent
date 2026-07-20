@@ -1,13 +1,13 @@
 # Reproduction Guide
 
-This document helps researchers reproduce results from the MSHA Safety Agent paper draft (`docs/paper_draft.md`).
+How to reproduce results from the MSHA Safety Agent paper ([paper_draft.md](paper_draft.md)).
 
 ## Prerequisites
 
 - Python 3.10+
 - ~4 GB disk for raw/processed MSHA data
 - ~2 GB for PyTorch and embedding models (downloaded on first use)
-- OpenAI API key (**optional** — Groq free tier or Ollama work instead; see [FREE_LLM_OPTIONS.md](FREE_LLM_OPTIONS.md))
+- LLM API key **optional** (offline mode reproduces paper benchmark numbers)
 
 ## One-command setup
 
@@ -24,8 +24,6 @@ If PyTorch download fails on slow networks, re-run the script; the wheel downloa
 
 ### GPU (optional)
 
-For CUDA PyTorch instead of CPU:
-
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cu124
 pip install sentence-transformers chromadb openai
@@ -39,7 +37,7 @@ pip install sentence-transformers chromadb openai
 jupyter lab notebooks/
 ```
 
-Run notebooks 01 through 06 in order. Each notebook calls the same modules as the CLI (`python -m src...`).
+Run notebooks 01 through 06 in order. Each notebook calls the same modules as the CLI.
 
 ### Path B: Command line
 
@@ -54,38 +52,67 @@ Run notebooks 01 through 06 in order. Each notebook calls the same modules as th
 | 8 | `python eval/run_benchmark.py` |
 | 9 | `python eval/score.py` |
 
+Or use Make: `make ingest`, `make classifier`, `make index`, `make benchmark`, `make eval`.
+
 ### Path C: Automated tests
 
 ```bash
-pytest tests/ -v
+pytest tests/ -v -m "not slow"
 ```
 
-Excludes slow full-index retrieval unless you run `pytest tests/test_retrieval.py -m slow`.
+Run `pytest tests/test_retrieval.py -m slow` for the full-index retrieval check.
 
-## Environment variables
+## LLM providers
 
-Copy `.env.example` to `.env`. **No paid API required** for paper reproduction.
+No paid API is required to reproduce the primary benchmark (93.3% offline agent accuracy).
 
-| Mode | Setup |
-|------|--------|
-| **Offline (paper numbers)** | `LLM_PROVIDER=offline` then Steps 8–9 |
-| **Groq (free cloud, recommended)** | `GROQ_API_KEY` from [console.groq.com](https://console.groq.com) |
-| **Ollama (local)** | `ollama pull qwen2.5:7b` and `OLLAMA_MODEL=qwen2.5:7b` |
-| **OpenAI (paid)** | `OPENAI_API_KEY` |
+### Offline tools (paper benchmark)
 
-Full comparison: [FREE_LLM_OPTIONS.md](FREE_LLM_OPTIONS.md).
+Deterministic category-based routing — no LLM calls:
 
 ```bash
-# Reproduce paper benchmark (offline, zero cost)
 export LLM_PROVIDER=offline
 python eval/run_benchmark.py
 python eval/score.py
-# Expect agent overall accuracy ~93.3%
 ```
 
-## Expected artifacts
+### Groq (recommended for live LLM runs)
 
-After a full run:
+Free tier at [console.groq.com](https://console.groq.com) (no credit card). Uses Llama 3.3 70B via an OpenAI-compatible API.
+
+```bash
+# .env
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=llama-3.3-70b-versatile
+LLM_PROVIDER=groq
+```
+
+Limits: ~30 requests/min, ~1,000 requests/day on 70B — sufficient for one 60-question benchmark.
+
+### Ollama (local)
+
+```bash
+ollama pull qwen2.5:7b
+export OLLAMA_MODEL=qwen2.5:7b
+export LLM_PROVIDER=ollama
+```
+
+Supplementary runs with `qwen2.5:7b` scored 53.3% overall (0% on trend questions). Prefer Groq 70B or offline routing for reliable results.
+
+### OpenAI (paid)
+
+Set `OPENAI_API_KEY` and optionally `OPENAI_MODEL=gpt-4o-mini`.
+
+### Provider priority (`LLM_PROVIDER=auto`, default)
+
+1. `OPENAI_API_KEY` → OpenAI
+2. `GROQ_API_KEY` → Groq
+3. Ollama on `localhost:11434` → Ollama
+4. None → offline tool routing
+
+Force a mode: `LLM_PROVIDER=offline|groq|ollama|openai`
+
+## Expected artifacts
 
 | Artifact | Location |
 |----------|----------|
@@ -99,21 +126,44 @@ After a full run:
 
 None of these are committed (see `.gitignore`).
 
-## Reference metrics (classifier, stratified holdout)
+## Reference metrics
 
-These numbers come from `data/processed/classifier_evaluation.json` after running Step 2:
+### Classifier (stratified holdout, n=48,128)
 
-- Accuracy: 0.574
-- Macro F1: 0.562
-- Fatality (code 01) recall: 0.538
+| Metric | Value |
+|--------|-------|
+| Accuracy | 0.574 |
+| Macro F1 | 0.562 |
+| Fatality (01) recall | 0.538 |
 
-See `docs/IMPLEMENTATION.md` for full per-class recall and out-of-time split results.
+Out-of-time split (train 2000–2020, test 2021+): accuracy 0.553, macro F1 0.559, fatality recall 0.456. Weak recall on codes 04, 09, and 10. Full per-class tables are in `classifier_evaluation.json` after `make classifier`.
 
-## Benchmark review gate
+### Benchmark (offline agent, 60 questions)
 
-Step 7 builds `benchmark/questions.json` before any system is evaluated on it. Review that file before running Step 8 (`eval/run_benchmark.py`).
+| System | Overall | Tool selection |
+|--------|---------|----------------|
+| Tool-augmented agent | 93.3% | 100% |
+| Classifier baseline | 30.0% | 33% |
+| Retrieval-only baseline | 30.0% | 33% |
 
-## Human evaluation (Step 10)
+Single-tool baselines cover one question category each (20/60), so 30% overall is expected.
+
+### Benchmark failure analysis
+
+| System | Failures | Cause |
+|--------|----------|-------|
+| Agent (offline) | 4 / 60 | Classifier errors (2), retrieval rank (2) |
+| Classifier baseline | 42 / 60 | Out-of-domain questions by design |
+| Retrieval baseline | 42 / 60 | Out-of-domain questions by design |
+
+**Agent failures:**
+
+- **CLS-03, CLS-14:** Classifier predicted degree code `03`; routing was correct (macro F1: 0.562).
+- **CASE-14, CASE-15:** Semantic retrieval did not rank the reference document in the top five results.
+
+Trend category: 100% (20/20) after filter normalization for fatality counts and hyphenated degree-code forms.
+
+## Human evaluation
 
 Protocol and stimulus builder: `eval/human_eval/materials.md`, `eval/human_eval/build_stimuli.py`.
 
@@ -121,14 +171,14 @@ Protocol and stimulus builder: `eval/human_eval/materials.md`, `eval/human_eval/
 
 | Issue | Fix |
 |-------|-----|
-| PyTorch install timeout | Re-run `bash scripts/setup.sh` (resumes `.wheels/` download) |
-| `ModuleNotFoundError: src` | Run notebooks from repo root or import `notebooks._path_setup` |
-| Retrieval index missing | Run `python -m src.tools.run_retrieval_index` or notebook 04 |
-| Agent errors | Set `GROQ_API_KEY`, run Ollama, or use `LLM_PROVIDER=offline` |
+| PyTorch install timeout | Re-run `bash scripts/setup.sh` |
+| `ModuleNotFoundError: src` | Run from repo root or import `notebooks._path_setup` |
+| Retrieval index missing | `make index` or notebook 04 |
+| Agent errors | Set `GROQ_API_KEY`, run Ollama, or `LLM_PROVIDER=offline` |
 | CI vs local | GitHub Actions runs ingest + classifier train + pytest |
 
 ## Citation
 
-Working title from the paper draft:
-
 > Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis: A Study Using U.S. Mine Safety and Health Administration Data
+
+See [CITATION.cff](../CITATION.cff) for BibTeX-compatible metadata.
