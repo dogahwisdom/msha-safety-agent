@@ -1,4 +1,4 @@
-.PHONY: setup ingest test test-all notebook classifier index benchmark eval help
+.PHONY: setup ingest test test-all notebook classifier index benchmark eval paper help
 
 help:
 	@echo "MSHA Safety Agent — common targets"
@@ -9,6 +9,7 @@ help:
 	@echo "  make index      Build narrative retrieval index (Step 4)"
 	@echo "  make benchmark  Build benchmark questions (Step 7)"
 	@echo "  make eval       Run benchmark + score (Steps 8–9, respects LLM_PROVIDER)"
+	@echo "  make paper      Build LaTeX manuscript PDF + arXiv tarball"
 	@echo "  make notebook   Start JupyterLab in notebooks/"
 
 setup:
@@ -38,3 +39,6 @@ eval:
 
 notebook:
 	.venv/bin/jupyter lab notebooks/
+
+paper:
+	bash scripts/build_paper.sh

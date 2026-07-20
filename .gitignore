@@ -37,6 +37,18 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 
+# LaTeX build artifacts (keep source + submission PDF/tarball)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.blg
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+paper/main.pdf
+paper/main.bbl
+
 # OS / editor
 .DS_Store
 Thumbs.db

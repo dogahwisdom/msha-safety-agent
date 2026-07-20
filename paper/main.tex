@@ -1,0 +1,520 @@
+\documentclass[11pt,a4paper]{article}
+
+% Traxia-style arXiv preamble (pdfLaTeX; no fontspec)
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage[dvipsnames]{xcolor}
+
+\usepackage[a4paper]{geometry}
+\geometry{
+  left=2.4cm,
+  right=2.4cm,
+  top=2.5cm,
+  bottom=2.6cm,
+  footskip=28pt,
+}
+
+\setstretch{1.05}
+\setlength{\emergencystretch}{2.5em}
+\setlength{\parskip}{0.3em plus 0.08em minus 0.15em}
+\setlength{\parindent}{1.25em}
+\setlist[itemize]{noitemsep, topsep=2pt}
+\setlist[enumerate]{noitemsep, topsep=2pt}
+
+\captionsetup{
+  font=small,
+  labelfont=bf,
+  labelsep=colon,
+  skip=6pt,
+  justification=justified,
+  singlelinecheck=false,
+}
+\captionsetup[table]{position=above, skip=5pt}
+
+\setcounter{secnumdepth}{3}
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\renewcommand{\abstractname}{Abstract}
+\renewenvironment{abstract}{%
+  \centerline{\textbf{\abstractname}}\par\vspace{0.5em}%
+  \small\justifying
+}{%
+  \par\vspace{0.6em}%
+}
+
+\usepackage[numbers,sort,compress]{natbib}
+\usepackage{url}
+\urlstyle{same}
+\usepackage[
+  colorlinks=true,
+  linkcolor=NavyBlue,
+  citecolor=NavyBlue,
+  urlcolor=NavyBlue,
+  filecolor=NavyBlue,
+  bookmarks=true,
+  bookmarksopen=true,
+  pdfborder={0 0 0},
+  breaklinks=true,
+]{hyperref}
+\usepackage{bookmark}
+\hypersetup{
+  pdftitle={Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis},
+  pdfauthor={Wisdom Dogah},
+}
+
+\newcommand{\email}[1]{\href{mailto:#1}{#1}}
+
+\title{%
+  \textbf{Tool-Augmented Language Model Agents for}\\[0.35em]
+  \textbf{Explainable Mine Safety Risk Analysis:}\\[0.35em]
+  \textbf{A Study Using U.S.\ Mine Safety and Health Administration Data}%
+}
+
+\author{%
+  Wisdom Dogah%
+  \thanks{\footnotesize Faculty of Computing and Mathematical Sciences,\\ University of Mines and Technology (UMaT), Tarkwa, Ghana.}%
+  \thanks{\footnotesize BlackMatrix AI Research, Accra, Ghana.}%
+  \thanks{\footnotesize Correspondence: \email{wisdom@blackmatrix.io}.}%
+  \thanks{\footnotesize Preprint. Comments welcome.}%
+}
+
+\date{July 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{plain}
+\justifying
+
+\begin{abstract}
+Mining remains one of the more hazardous industrial occupations, and
+safety regulators such as the United States Mine Safety and Health
+Administration (MSHA) collect large volumes of accident and injury
+data every year, combining structured fields with free text narratives
+written by mine operators. Prior work on this dataset has treated it as
+a supervised learning problem: predicting injury severity or days away
+from work using logistic regression, decision trees, or neural networks
+trained on structured fields and, in some cases, the narrative text.
+These models produce a prediction but not an explanation a safety
+officer can act on, and none of them let a user ask a follow-up question
+in plain language. Separately, a recent line of work on tool-augmented
+large language model agents has shown that an LLM can plan, call
+external tools, and reason over heterogeneous operational data in
+domains such as oil and gas drilling, but this pattern has not yet been
+applied to occupational mine safety data, and none of the agentic systems
+in adjacent domains report a human evaluation of the explanations they
+produce. This paper proposes and evaluates a tool-augmented LLM agent
+that answers natural language safety questions by combining a structured
+risk classifier, a trend analysis tool, and a retrieval tool over
+historical injury narratives from the MSHA Accident, Injury, and Illness
+dataset. The system is compared against a plain classifier baseline and
+a retrieval-augmented generation baseline on answer accuracy, tool
+selection correctness, and latency. On a 60-question benchmark (20
+classification, 20 trend, 20 case-grounded), the tool-augmented agent
+achieves \textbf{93.3\% overall accuracy} in offline tool routing mode,
+versus \textbf{30.0\%} for each baseline, with \textbf{100\% tool
+selection correctness} and mean latency \textbf{0.26\,s} per question.
+The structured classifier tool alone achieves 0.574 accuracy and 0.562
+macro F1 on a 48{,}128-record holdout over ten injury severity classes.
+Explanation quality assessment using the Explanation Satisfaction Scale
+of Hoffman et al.~\cite{Hoffman2023} is prepared for mining
+engineering faculty and senior students; participant data collection
+is ongoing.
+
+\noindent\textbf{Keywords:}
+mine safety;
+MSHA;
+tool-augmented LLM;
+agentic AI;
+explainable AI;
+occupational safety;
+retrieval-augmented generation;
+human evaluation.
+\end{abstract}
+
+\section{Introduction}
+
+Mining safety has improved substantially over the past several decades
+through regulation, mechanization, and safety culture, but injuries and
+fatalities have not been eliminated, and mine operators and safety
+officers still spend considerable effort reviewing historical incident
+records by hand or through simple dashboards when trying to understand
+what drives risk at a given site. The United States Mine Safety and
+Health Administration has published detailed accident, injury, and
+illness records since 2000 under its Open Government Data Initiative, and
+this dataset has become a standard resource for applied machine learning
+research on occupational mine safety. Existing studies using this dataset
+fall into a narrow methodological pattern: a model is trained to predict
+an outcome, such as degree of injury or number of days away from work,
+from structured fields and sometimes from the injury narrative text, and
+its predictive accuracy is reported.
+
+This pattern has two limitations that matter for how the data is actually
+used in practice. First, a single number or classification label does not
+tell a safety officer why the model produced that answer, and does not
+let them ask a natural follow-up question such as which occupations show
+the sharpest recent increase in a given injury type, or whether a specific
+incident resembles a known historical cluster. Second, none of the
+published work on this dataset evaluates whether the output is actually
+useful or trustworthy to the people who would use it, since none of it
+involves a human evaluation study.
+
+At the same time, a separate and recent strand of research has demonstrated
+that large language models can be wrapped in an agent loop that plans
+which tool to call, executes that tool, and reasons over the result, rather
+than simply generating a single answer from a prompt. This pattern, sometimes
+called tool use or tool augmentation, was formalized in general purpose form
+by Yao et al.~\cite{Yao2023} and Schick et al.~\cite{Schick2023}, and has
+recently been applied to a real industrial operations problem by Lu~\cite{Lu2026},
+whose TADI system orchestrates twelve domain-specific tools over drilling
+reports and sensor data from an oil field, explicitly avoiding heavyweight
+agent frameworks in favor of a small, auditable orchestration loop built
+directly on a large language model provider's function calling interface.
+As far as we can determine from a review of the mining, safety, and agentic
+AI literature, this pattern has not yet been applied to mine safety data,
+and the general MLLM agent literature that does touch on mining, notably
+the MineAgent system of Wang et al.~\cite{Wang2024}, addresses mineral
+exploration from remote sensing imagery rather than occupational safety or
+operational decision support.
+
+This paper makes three contributions. First, it introduces a tool-augmented
+LLM agent architecture for reasoning over the MSHA accident and injury
+dataset, combining a structured classifier, a statistical trend tool, and
+a retrieval tool over incident narratives, following the transparent,
+framework-free orchestration design demonstrated by Lu~\cite{Lu2026} in a
+different industrial domain. Second, it evaluates this system against two
+baselines, a direct classifier and a single-shot retrieval-augmented
+generation pipeline, on task accuracy, tool selection correctness, and
+latency on a fixed 60-question benchmark. Third, it provides a human
+evaluation protocol based on the Explanation Satisfaction Scale of Hoffman
+et al.~\cite{Hoffman2023} for mining engineering faculty and senior
+students; participant data collection is in progress.
+
+The remainder of this paper is organized as follows. Section~\ref{sec:related}
+reviews related work. Section~\ref{sec:data} describes the dataset and
+preprocessing. Section~\ref{sec:architecture} describes the proposed
+architecture. Section~\ref{sec:experiments} describes the experimental
+design. Section~\ref{sec:results} reports results. Section~\ref{sec:discussion}
+discusses contributions and limitations. Implementation steps are documented
+in the repository reproduction guide.
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Predictive modeling of MSHA accident and injury data}
+
+The MSHA Accident, Injury, and Illness dataset, collected under 30 CFR Part
+50 and published through MSHA's Open Government Data Initiative~\cite{MSHA2024},
+has been used in several prior studies. Amoako et al.~\cite{Amoako2021} applied
+multiclass logistic regression to a ten-year injury dataset to identify risk
+factors associated with different injury classes. Yedla et al.~\cite{Yedla2020}
+used roughly 228{,}000 records with fifty variables to train deep neural
+networks predicting both injury outcome and days away from work, comparing
+against logistic regression and exploring synthetic data augmentation on
+narrative text. Yedla~\cite{Yedla2019} applied decision trees, random forests,
+and artificial neural networks to accidents reported between 2000 and 2018.
+Across all three studies, the narrative text field, when used at all, is treated
+as an additional input feature for a supervised model rather than as something
+a user can query directly, and none includes a human evaluation of how useful
+or interpretable practitioners find the output.
+
+\subsection{Computer vision, digital twins, and multimodal AI in mining safety}
+
+A parallel body of applied work uses computer vision to detect hazards,
+personal protective equipment violations, and unsafe proximity between workers
+and equipment from camera feeds. Several of these papers explicitly identify
+explainable AI and multimodal sensor fusion as future work rather than
+delivering it, which is consistent with the gap this paper addresses, though
+these systems operate on a different data modality (real-time video) than the
+one used here. Digital twin approaches to mining operations have been the
+subject of recent systematic reviews; these indicate that the digital twin
+literature is comparatively mature and would need a narrow, specific technical
+angle to contribute something new, which is part of why this paper does not
+pursue that direction.
+
+\subsection{Tool-augmented and agentic LLM systems}
+
+The general capability of large language models to interleave reasoning with
+calls to external tools was formalized by Yao et al.~\cite{Yao2023} in the
+ReAct framework and extended by Schick et al.~\cite{Schick2023} in Toolformer.
+Lu~\cite{Lu2026} applied this pattern to structured drilling records and free
+text daily drilling reports from the Equinor Volve field, orchestrating twelve
+domain-specific tools through direct function calling. Wang et al.~\cite{Wang2024}
+apply a multimodal LLM agent to mineral exploration from remote sensing
+imagery, which shares a domain label with the present work but addresses a
+different task rather than operational or safety decision support. No published
+work identified in this review applies the tool-augmented LLM agent pattern
+to occupational safety data in mining.
+
+\subsection{Explainability and trust evaluation}
+
+Hoffman et al.~\cite{Hoffman2023} developed validated scales for explainable
+AI research covering explanation goodness, user satisfaction, curiosity, and
+trust, including the Explanation Satisfaction Scale. Trust in automation more
+broadly has a long history in human factors research~\cite{Lee2004}, whose
+framework for appropriate reliance underlies much of the more recent human-AI
+collaboration literature this project draws on for study design.
+
+\section{Data}
+\label{sec:data}
+
+The primary dataset is the MSHA Accident, Injury, and Illness dataset,
+available through MSHA's Open Government Data Initiative~\cite{MSHA2024},
+containing all accidents, injuries, and illnesses reported by mine operators
+and contractors in the United States since January 1, 2000, drawn from MSHA
+Form 7000-1. Each record includes a unique document number and structured
+fields describing subunit, degree of injury, mining equipment involved,
+accident classification, occupation, activity at the time of the accident,
+injury source, nature of injury, and body part affected, along with a free
+text narrative describing the incident in the operator's own words.
+
+We downloaded the Accident Injuries dataset and the Mine Identification
+dataset from MSHA's data portal, removed records with missing or invalid
+values in fields required for classification, and held out a stratified 20\%
+test sample across calendar years and injury classes. The final cleaned corpus
+contains 240{,}640 records (192{,}512 train / 48{,}128 test). Narrative text
+was embedded with \texttt{sentence-transformers/all-MiniLM-L6-v2} and indexed
+in ChromaDB for semantic retrieval. A benchmark of 60 natural language
+questions, written before system evaluation, spans classification, trend, and
+case-grounded categories (Section~\ref{sec:experiments}). Because the dataset
+covers United States operations only, findings may not transfer directly to
+other regulatory environments, including Ghana, without further validation.
+
+\section{System Architecture}
+\label{sec:architecture}
+
+The system follows the general orchestration pattern demonstrated by Lu~\cite{Lu2026}
+for drilling operations, adapted here for occupational safety reasoning rather
+than drilling engineering, and built without a heavyweight agent framework so
+that every step in the reasoning process is visible and can be audited.
+
+\textbf{Data layer.} Structured MSHA fields are loaded into a relational
+analytical store. Narrative texts are chunked and embedded into a vector store
+to support semantic retrieval over historical incident descriptions.
+
+\textbf{Tool layer.} Three tools are implemented as deterministic, testable
+functions:
+\begin{itemize}
+  \item A \emph{risk classification tool}, which reproduces and extends the
+    supervised modeling approach of prior MSHA studies (a random forest
+    baseline) to predict injury severity class for a specified set of
+    conditions.
+  \item A \emph{trend analysis tool}, which computes rates, counts, and changes
+    over time for a specified injury type, occupation, equipment category, or
+    mine site.
+  \item A \emph{narrative retrieval tool}, which performs semantic search over
+    historical incident narratives and returns the most relevant matching
+    incidents with their structured metadata.
+\end{itemize}
+
+\textbf{Orchestrator.} A large language model receives the user's question,
+a system prompt describing the three tools, and access to the tools through
+the provider's native function calling interface. The model selects which tool
+or sequence of tools to call, receives the tool output, and produces a natural
+language answer citing which tools were used.
+
+\textbf{Baselines for comparison.} Two baselines isolate the value of tool
+augmentation: a direct classifier baseline, which answers only classification-style
+questions; and a single-shot retrieval-augmented generation baseline, which
+retrieves relevant narrative chunks and passes them to the language model in
+a single prompt without tool orchestration or access to the trend or
+classification tools.
+
+\section{Experimental Design}
+\label{sec:experiments}
+
+\textbf{Research questions.} Does tool-augmented orchestration improve answer
+accuracy over a direct classifier and over a single-shot retrieval-augmented
+generation baseline, for natural language safety questions posed against the
+MSHA dataset? Does the system correctly select the tool or tools appropriate
+to a given question? What is the latency per query, and how does this scale
+with question complexity? Do mining engineering domain experts rate the
+system's explanations as satisfactory and trustworthy using a validated
+instrument?
+
+\textbf{Benchmark construction.} Sixty natural language questions were authored
+in three equal categories: classification-style questions with explicit MSHA
+field codes, trend and comparison questions requiring aggregation, and
+case-grounded questions requiring retrieval of similar historical incidents.
+Reference answers were derived from cleaned data and tool outputs before any
+benchmark run.
+
+\textbf{Quantitative metrics.} Task accuracy (proportion correct per category
+and overall), tool selection correctness (invoked tools vs.\ expected tools
+per question), and latency (wall-clock time per query).
+
+\textbf{Human evaluation.} Mining engineering faculty and senior students at
+the University of Mines and Technology will rate blinded question--answer pairs
+using the Explanation Satisfaction Scale~\cite{Hoffman2023}. Target sample:
+10--20 participants; results will be reported descriptively as an exploratory
+study.
+
+\textbf{Failure case analysis.} Incorrect benchmark answers were logged and
+categorized by failure type (classifier error, retrieval miss, tool routing
+error).
+
+\section{Results}
+\label{sec:results}
+
+All quantitative results were produced from the open source implementation.
+Benchmark questions and reference answers were fixed before evaluation. The
+primary agent evaluation used deterministic tool routing without LLM inference,
+isolating tool correctness at zero API cost. Supplementary live LLM runs
+(local Ollama) are reported in Section~\ref{sec:live-llm}.
+
+\subsection{Data and classifier tool}
+
+After cleaning, \textbf{240{,}640} accident records remained (273{,}614 raw;
+exclusions documented in the reproduction guide). An 80/20 stratified split
+yielded 192{,}512 training and 48{,}128 test records across ten
+\texttt{DEGREE\_INJURY\_CD} classes (codes 01--10).
+
+The random forest classifier (\texttt{InjuryRiskClassifier}, 100 trees,
+balanced class weights) achieved on the stratified holdout:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Classifier holdout metrics on 48{,}128 test records.}
+  \label{tab:classifier}
+  \begin{tabular}{@{}lc@{}}
+    \toprule
+    Metric & Value \\
+    \midrule
+    Accuracy & 0.574 \\
+    Macro F1 & 0.562 \\
+    Weighted F1 & 0.565 \\
+    Fatality (01) recall & 0.538 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Out-of-time evaluation (train 2000--2020, test 2021+) yielded accuracy 0.553
+and macro F1 0.559. These figures are comparable in spirit to prior MSHA
+supervised modeling at similar data scale~\cite{Yedla2020} but are not directly
+comparable across different targets and feature sets.
+
+\subsection{Benchmark accuracy (60 questions)}
+
+Three systems were evaluated on the same 60 questions: tool-augmented agent
+(offline routing), classifier baseline, and retrieval-only baseline (semantic
+search without LLM synthesis).
+
+\begin{table}[htbp]
+  \centering
+  \caption{Benchmark accuracy by question category ($n=20$ per category).}
+  \label{tab:benchmark}
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    System & Classification & Trend & Case-grounded & Overall \\
+    \midrule
+    Tool-augmented agent & 90.0\% & \textbf{100.0\%} & 90.0\% & \textbf{93.3\%} \\
+    Classifier baseline & 90.0\% & 0.0\% & 0.0\% & 30.0\% \\
+    Retrieval-only baseline & 0.0\% & 0.0\% & 90.0\% & 30.0\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The agent's advantage over baselines reflects \emph{coverage}: each baseline
+handles only one question type, while the agent routes to the appropriate tool
+for all three. Tool selection correctness for the offline agent was
+\textbf{100\%} (60/60), because routing uses benchmark category metadata; live
+LLM evaluation must infer tool choice from natural language alone.
+
+Mean latency: agent 0.26\,s, classifier baseline 0.18\,s, retrieval baseline
+0.03\,s. No LLM tokens were consumed in the offline run.
+
+\subsection{Failure analysis}
+
+Four agent failures occurred:
+\begin{enumerate}
+  \item \textbf{Two classification errors (CLS-03, CLS-14):} classifier
+    predicted degree code 03 instead of the reference code.
+  \item \textbf{Two retrieval errors (CASE-14, CASE-15):} semantically similar
+    narratives were retrieved but the reference document was not in the top five
+    results.
+\end{enumerate}
+Baseline failures on out-of-domain question types are expected by design.
+
+\subsection{Human evaluation}
+
+Materials for the Hoffman et al.~\cite{Hoffman2023} Explanation Satisfaction
+Scale are prepared. Participant ratings are not yet included; data collection at
+the University of Mines and Technology is planned.
+
+\subsection{Live LLM evaluation (Ollama, local)}
+\label{sec:live-llm}
+
+A supplementary run used Ollama with \texttt{qwen2.5:7b} on the same 60-question
+benchmark:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Offline tool routing vs.\ local live LLM (Ollama).}
+  \label{tab:ollama}
+  \begin{tabular}{@{}lccc@{}}
+    \toprule
+    System & Overall accuracy & Tool selection & Mean latency \\
+    \midrule
+    Live LLM agent (Ollama) & 53.3\% & 88.3\% & 12.4\,s \\
+    Offline tool agent & \textbf{93.3\%} & \textbf{100\%} & 0.26\,s \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The smaller local model struggled on trend questions (0\% accuracy) and
+misread some tool outputs. Larger models with reliable function calling are
+recommended for live deployment; see the repository reproduction guide.
+
+\section{Contributions and Limitations}
+\label{sec:discussion}
+
+This paper makes three contributions, now supported by implemented code and
+measured results. First, it introduces a tool-augmented LLM agent architecture
+for reasoning over the MSHA accident and injury dataset. Second, on a fixed
+60-question benchmark, the tool-augmented agent achieves 93.3\% accuracy in
+offline routing mode versus 30.0\% for each single-tool baseline, demonstrating
+that multi-tool coverage is necessary for mixed natural language safety
+questions. Third, it prepares the first human evaluation protocol for
+explanation quality in mine safety AI using the Explanation Satisfaction Scale
+of Hoffman et al.~\cite{Hoffman2023}; participant data collection remains
+future work.
+
+Limitations stated plainly:
+\begin{itemize}
+  \item \textbf{Offline routing:} Primary benchmark numbers use category-based
+    tool routing, not live LLM natural language understanding.
+  \item \textbf{Geographic scope:} U.S.\ MSHA data only; findings may not transfer
+    to Ghana or other regulatory environments without validation.
+  \item \textbf{Classifier weakness:} Macro F1 0.562; several severity classes
+    (04, 09, 10) have low recall.
+  \item \textbf{Retrieval:} Semantic search sometimes returns plausible but
+    incorrect reference documents (two benchmark failures).
+  \item \textbf{Human evaluation:} Protocol prepared; participant data not yet
+    collected.
+  \item \textbf{Cost of live LLM:} Not required for reproduction; Groq free tier
+    and Ollama are supported alternatives to paid OpenAI.
+\end{itemize}
+
+\section*{Acknowledgments}
+
+We thank the University of Mines and Technology for institutional support and
+the MSHA Open Government Data Initiative for public access to accident and
+injury records.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

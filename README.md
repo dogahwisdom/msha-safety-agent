@@ -32,7 +32,22 @@ An LLM orchestrator (Groq, Ollama, or OpenAI) selects tools via function calling
 | Classifier baseline | 30.0% | 33% |
 | Retrieval-only baseline | 30.0% | 33% |
 
-Classifier holdout: **0.574** accuracy, **0.562** macro F1 on 48,128 test records. Full results in [docs/paper_draft.md](docs/paper_draft.md).
+Classifier holdout: **0.574** accuracy, **0.562** macro F1 on 48,128 test records.
+
+### Paper
+
+| Artifact | Description |
+|----------|-------------|
+| [`paper/main.tex`](paper/main.tex) | Manuscript source |
+| [`paper/references.bib`](paper/references.bib) | Bibliography |
+| [`paper/MSHA_Safety_Agent.pdf`](paper/MSHA_Safety_Agent.pdf) | Compiled PDF |
+| [`paper/MSHA_Safety_Agent_arXiv_source.tar.gz`](paper/MSHA_Safety_Agent_arXiv_source.tar.gz) | Upload this to arXiv |
+| [`paper/ARXIV_SUBMISSION.md`](paper/ARXIV_SUBMISSION.md) | Submission checklist |
+| [`docs/paper_draft.md`](docs/paper_draft.md) | Markdown draft (same content) |
+
+```bash
+make paper
+```
 
 ---
 
@@ -102,7 +117,8 @@ msha-safety-agent/
 ├── notebooks/          Reproducible Jupyter workflow (Steps 1–6)
 ├── benchmark/          60 questions + reference answers
 ├── eval/               Benchmark runner, scoring, human-eval materials
-├── docs/               Paper and reproduction guide
+├── paper/              LaTeX manuscript + arXiv tarball
+├── docs/               Paper draft and reproduction guide
 ├── tests/              Unit tests
 └── scripts/setup.sh    Resumable environment setup
 ```
@@ -113,8 +129,11 @@ msha-safety-agent/
 
 | Document | Description |
 |----------|-------------|
-| [docs/paper_draft.md](docs/paper_draft.md) | Paper — methodology and results |
+| [paper/MSHA_Safety_Agent.pdf](paper/MSHA_Safety_Agent.pdf) | Compiled paper (PDF) |
+| [paper/main.tex](paper/main.tex) | LaTeX manuscript source |
+| [docs/paper_draft.md](docs/paper_draft.md) | Markdown draft (same content) |
 | [docs/REPRODUCTION.md](docs/REPRODUCTION.md) | Reproduction, LLM setup, and metrics |
+| [paper/ARXIV_SUBMISSION.md](paper/ARXIV_SUBMISSION.md) | arXiv upload checklist |
 
 ---
 
