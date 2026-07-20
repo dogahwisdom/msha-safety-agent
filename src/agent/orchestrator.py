@@ -11,6 +11,24 @@ from src.agent.prompts import SYSTEM_PROMPT
 from src.agent.tools import TOOL_SCHEMAS, AgentToolExecutor
 
 
+def _assistant_message_for_api(message: Any) -> dict[str, Any]:
+    """Build a provider-safe assistant message (Groq rejects OpenAI-only fields like annotations)."""
+    payload: dict[str, Any] = {"role": "assistant", "content": message.content}
+    if message.tool_calls:
+        payload["tool_calls"] = [
+            {
+                "id": call.id,
+                "type": "function",
+                "function": {
+                    "name": call.function.name,
+                    "arguments": call.function.arguments or "{}",
+                },
+            }
+            for call in message.tool_calls
+        ]
+    return payload
+
+
 class MSHASafetyAgent:
     """Tool-augmented agent loop using OpenAI-compatible function calling."""
 
@@ -63,7 +81,7 @@ class MSHASafetyAgent:
                     "log_path": str(logger.log_path),
                 }
 
-            messages.append(message.model_dump())
+            messages.append(_assistant_message_for_api(message))
             for call in tool_calls:
                 tool_name = call.function.name
                 arguments = json.loads(call.function.arguments or "{}")
