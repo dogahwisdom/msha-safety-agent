@@ -129,9 +129,16 @@ Baseline failures on out-of-domain question types are expected by design.
 
 Materials for the Hoffman et al. (2023) Explanation Satisfaction Scale are prepared (`eval/human_eval/materials.md`). **No participant ratings are included in this draft.** A small blinded study with mining engineering faculty and students at the University of Mines and Technology is planned.
 
-### 6.5 Live LLM evaluation (optional extension)
+### 6.5 Live LLM evaluation (Ollama, local)
 
-The repository supports free cloud inference via **Groq** (`llama-3.3-70b-versatile`, no credit card) and local **Ollama**. Live LLM runs use the same function calling orchestrator as designed in Section 4. Results from live LLM evaluation can be added as a supplementary row when completed; they are not required for the core systems contribution documented here.
+A supplementary run used **Ollama** with `qwen2.5:7b` on the same 60 question benchmark:
+
+| System | Overall accuracy | Tool selection | Mean latency |
+|--------|------------------|----------------|--------------|
+| Live LLM agent (Ollama) | 53.3% | 88.3% | 12.4 s |
+| Offline tool agent | **93.3%** | **100%** | 0.26 s |
+
+The smaller local model struggled on trend questions (0% accuracy) and misread some tool outputs. **Groq's free `llama-3.3-70b-versatile` tier is recommended** over local 7B models for live function calling; see `docs/FREE_LLM_OPTIONS.md`.
 
 ---
 

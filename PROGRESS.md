@@ -215,7 +215,9 @@ Fatality recall drops to 0.456 out-of-time. Classes 04, 09, and 10 remain weak o
 
 **Offline overall accuracy (Step 9):** agent **93.3%**, classifier_baseline 30.0%, rag_baseline 30.0%. Agent tool-selection rate: 100%. Trend category: 100% (20/20). See `docs/FAILURE_ANALYSIS.md`.
 
-**Live LLM:** Optional via Groq (free), Ollama, or OpenAI — see `docs/FREE_LLM_OPTIONS.md`.
+**Live LLM (Ollama `qwen2.5:7b`, 2026-07-19):** agent 53.3% overall, 88.3% tool selection, 12.4 s mean latency. Results: `eval/results/benchmark_runs_ollama.json`. Trend category 0% — confirms 7B local model is weak for this task; use Groq 70B or offline routing for paper numbers.
+
+**Live LLM:** Groq (free) recommended over Ollama 7B — see `docs/FREE_LLM_OPTIONS.md`.
 
 ---
 
