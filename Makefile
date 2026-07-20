@@ -1,4 +1,4 @@
-.PHONY: setup ingest test test-all notebook classifier index benchmark help
+.PHONY: setup ingest test test-all notebook classifier index benchmark eval help
 
 help:
 	@echo "MSHA Safety Agent — common targets"
@@ -8,6 +8,7 @@ help:
 	@echo "  make classifier Train classifier (Step 2)"
 	@echo "  make index      Build narrative retrieval index (Step 4)"
 	@echo "  make benchmark  Build benchmark questions (Step 7)"
+	@echo "  make eval       Run benchmark + score (Steps 8–9, respects LLM_PROVIDER)"
 	@echo "  make notebook   Start JupyterLab in notebooks/"
 
 setup:
@@ -30,6 +31,10 @@ index:
 
 benchmark:
 	.venv/bin/python benchmark/build_benchmark.py
+
+eval:
+	.venv/bin/python eval/run_benchmark.py
+	.venv/bin/python eval/score.py
 
 notebook:
 	.venv/bin/jupyter lab notebooks/

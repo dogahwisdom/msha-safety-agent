@@ -107,7 +107,7 @@ These numbers come from `data/processed/classifier_evaluation.json` after runnin
 - Macro F1: 0.562
 - Fatality (code 01) recall: 0.538
 
-See `PROGRESS.md` for full per-class recall and out-of-time split results.
+See `docs/PROGRESS.md` for full per-class recall and out-of-time split results.
 
 ## Benchmark review gate
 

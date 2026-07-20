@@ -1,131 +1,122 @@
 # MSHA Safety Agent
 
-Research codebase for a tool-augmented LLM agent that answers natural-language mine safety questions over U.S. Mine Safety and Health Administration (MSHA) accident and injury data.
+[![CI](https://github.com/dogahwisdom/msha-safety-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/dogahwisdom/msha-safety-agent/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![Jupyter](https://img.shields.io/badge/Jupyter-F37626?logo=jupyter&logoColor=white)](https://jupyter.org/)
 
-Instead of only predicting injury severity with a black-box classifier, the system uses an LLM to decide when to call three inspectable tools (a risk classifier, a trend analyzer, and a narrative retriever), then produces answers that can be audited and rated by domain experts.
+Tool-augmented LLM agent for **explainable mine safety risk analysis** over U.S. MSHA accident and injury data — classifier, trends, and narrative retrieval behind an auditable agent loop.
 
-**Paper draft (source of truth):** [docs/paper_draft.md](docs/paper_draft.md)
-
-**Implementation progress:** [PROGRESS.md](PROGRESS.md)
-
-**Reproduction guide:** [docs/REPRODUCTION.md](docs/REPRODUCTION.md)
-
-| Step | Component | Status |
-|------|-----------|--------|
-| 1 | Data acquisition and cleaning | Done |
-| 2 | Classifier tool | Done |
-| 3 | Trend analysis tool | Done |
-| 4 | Narrative retrieval tool | Done (index build required locally) |
-| 5 | Orchestrator (LLM) | Done (Groq / Ollama / OpenAI / offline) |
-| 6 | Baselines | Done |
-| 7 | Benchmark construction | Done |
-| 8 | System comparison runs | Done (offline: 93.3% agent accuracy) |
-| 9 | Scoring | Done |
-| 10 | Human evaluation materials | Done (materials only; participants pending) |
-
-**Free LLM options (no OpenAI payment):** [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md) — **Groq** (recommended, free cloud API) or **Ollama** (local).
-
-Results are in [docs/paper_draft.md](docs/paper_draft.md) Section 6.
+**Repository:** [github.com/dogahwisdom/msha-safety-agent](https://github.com/dogahwisdom/msha-safety-agent)
 
 ---
 
-## Quick start (researchers)
+## What is this?
+
+Instead of a black-box severity predictor, this system routes natural-language safety questions to three inspectable tools:
+
+| Tool | Purpose |
+|------|---------|
+| **Risk classifier** | Predict injury degree from structured MSHA field codes |
+| **Trend analyzer** | Counts, year-over-year changes, period comparisons |
+| **Narrative retriever** | Semantic search over 240k+ incident narratives |
+
+An LLM orchestrator (Groq, Ollama, or OpenAI) selects tools via function calling. A **zero-cost offline mode** routes by question category for reproducible paper numbers.
+
+### Benchmark results (60 questions)
+
+| System | Overall accuracy | Tool selection |
+|--------|------------------|----------------|
+| Tool-augmented agent (offline) | **93.3%** | 100% |
+| Classifier baseline | 30.0% | 33% |
+| Retrieval-only baseline | 30.0% | 33% |
+
+Classifier holdout: **0.574** accuracy, **0.562** macro F1 on 48,128 test records. Full results in [docs/paper_draft.md](docs/paper_draft.md).
+
+---
+
+## Quick start
 
 ```bash
 git clone https://github.com/dogahwisdom/msha-safety-agent.git
 cd msha-safety-agent
-bash scripts/setup.sh          # installs PyTorch, Jupyter, all deps
-source .venv/bin/activate
-jupyter lab notebooks/         # run notebooks 01–06 in order
-```
-
-Or use the CLI path documented in [docs/REPRODUCTION.md](docs/REPRODUCTION.md).
-
----
-
-## Project layout
-
-| Path | Purpose |
-|------|---------|
-| `notebooks/` | **Primary reproduction path** — one notebook per pipeline stage |
-| `scripts/setup.sh` | Resumable install (PyTorch wheel cache in `.wheels/`) |
-| `data/raw/` | Downloaded MSHA files (not committed) |
-| `data/processed/` | Cleaned data, models, vector index (not committed) |
-| `src/data/` | Ingestion and cleaning pipeline |
-| `src/tools/` | Classifier, trend, and retrieval tools |
-| `src/agent/` | Orchestrator: system prompt, function calling, agent loop |
-| `src/baselines/` | Plain classifier baseline and single-shot RAG baseline |
-| `benchmark/` | Question set and reference answers |
-| `eval/` | Scoring, logging, and human evaluation materials |
-| `docs/` | Paper draft and reproduction guide |
-| `tests/` | Unit tests mirroring notebook checks |
-
----
-
-## Setup
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
 bash scripts/setup.sh
+source .venv/bin/activate
+make ingest && make classifier && make test
 ```
 
-Copy `.env.example` to `.env`. **No payment required:**
+Reproduce the paper benchmark (no API key):
 
 ```bash
-# Best free option: Groq (sign up at console.groq.com, no credit card)
-GROQ_API_KEY=gsk_...
-GROQ_MODEL=llama-3.3-70b-versatile
-
-# Or local Ollama (auto-detected on localhost:11434)
-OLLAMA_MODEL=qwen2.5:7b
-
-# Or offline tool routing only (paper's primary benchmark numbers)
-LLM_PROVIDER=offline
+export LLM_PROVIDER=offline
+make eval
 ```
+
+Or use Jupyter: `make notebook` → run notebooks `01`–`06` in order.
+
+---
+
+## Make targets
+
+| Command | Description |
+|---------|-------------|
+| `make setup` | Install dependencies (PyTorch, Jupyter, etc.) |
+| `make ingest` | Download and clean MSHA data (Step 1) |
+| `make classifier` | Train injury severity classifier (Step 2) |
+| `make index` | Build narrative retrieval index (Step 4, ~30 min CPU) |
+| `make benchmark` | Build 60-question evaluation set (Step 7) |
+| `make eval` | Run benchmark + score (Steps 8–9) |
+| `make test` | Unit tests (excludes slow full-index test) |
+| `make notebook` | Start JupyterLab in `notebooks/` |
+
+---
+
+## LLM providers (no paid API required)
+
+| Provider | Cost | Setup |
+|----------|------|-------|
+| **Offline tools** | Free | `LLM_PROVIDER=offline` |
+| **Groq** | Free tier | `GROQ_API_KEY` from [console.groq.com](https://console.groq.com) |
+| **Ollama** | Free local | `ollama pull qwen2.5:7b` |
+| OpenAI | Paid | `OPENAI_API_KEY` |
 
 See [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md).
 
-**Dependencies include:** PyTorch (CPU), sentence-transformers, chromadb, OpenAI SDK, JupyterLab, pandas, scikit-learn.
-
----
-
-## Data pipeline (Step 1)
-
 ```bash
-python -m src.data.ingest
-```
-
-Or run [notebooks/01_data_ingestion.ipynb](notebooks/01_data_ingestion.ipynb).
-
-**Verified counts (2026-07-19):** 273,614 raw accident rows, 240,640 after cleaning, 192,512 train / 48,128 test.
-
----
-
-## Tools and agent
-
-| Step | CLI | Notebook |
-|------|-----|----------|
-| Classifier | `python -m src.tools.run_classifier` | `02_classifier_tool.ipynb` |
-| Trends | `pytest tests/test_trends.py` | `03_trend_analysis.ipynb` |
-| Retrieval | `python -m src.tools.run_retrieval_index` | `04_narrative_retrieval.ipynb` |
-| Agent | `python -m src.agent.run_agent "..."` | `05_agent_and_baselines.ipynb` |
-| Benchmark | `python benchmark/build_benchmark.py` | `06_benchmark_evaluation.ipynb` |
-
----
-
-## Testing
-
-```bash
-pytest tests/ -v
-pytest tests/ -m "not slow"   # skip full retrieval index test
+cp .env.example .env
+# Edit .env with your preferred provider
 ```
 
 ---
 
-## Implementation order
+## Repository layout
 
-From Section 6 of the paper draft. See [PROGRESS.md](PROGRESS.md) for verified metrics and notes.
+```
+msha-safety-agent/
+├── src/
+│   ├── data/           Ingestion, cleaning, train/test split
+│   ├── tools/          Classifier, trends, retrieval
+│   ├── agent/          LLM orchestrator and function calling
+│   └── baselines/      Classifier and RAG baselines
+├── notebooks/          Reproducible Jupyter workflow (Steps 1–6)
+├── benchmark/          60 questions + reference answers
+├── eval/               Benchmark runner, scoring, human-eval materials
+├── docs/               Paper draft, reproduction guide, progress tracker
+├── tests/              Unit tests
+└── scripts/setup.sh    Resumable environment setup
+```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/paper_draft.md](docs/paper_draft.md) | Working paper with results |
+| [docs/REPRODUCTION.md](docs/REPRODUCTION.md) | Full reproduction checklist |
+| [docs/FREE_LLM_OPTIONS.md](docs/FREE_LLM_OPTIONS.md) | Free LLM setup guide |
+| [docs/PROGRESS.md](docs/PROGRESS.md) | Step-by-step implementation tracker |
 
 ---
 
@@ -134,8 +125,25 @@ From Section 6 of the paper draft. See [PROGRESS.md](PROGRESS.md) for verified m
 - [MSHA Accident Injuries Data Set](https://catalog.data.gov/dataset/msha-accident-injuries-data-set)
 - [MSHA Open Government Data Portal](https://arlweb.msha.gov/OpenGovernmentData/OGIMSHA.asp)
 
+Raw and processed data are **not committed** — generated locally by `make ingest`.
+
 ---
 
 ## Citation
 
-> Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis: A Study Using U.S. Mine Safety and Health Administration Data
+```bibtex
+@software{msha_safety_agent,
+  author = {Wisdom, Dogah},
+  title = {MSHA Safety Agent: Tool-Augmented LLM for Mine Safety Analysis},
+  year = {2026},
+  url = {https://github.com/dogahwisdom/msha-safety-agent}
+}
+```
+
+See also [CITATION.cff](CITATION.cff) for machine-readable metadata.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

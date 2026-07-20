@@ -89,7 +89,7 @@ All quantitative results below were produced from the open source repository acc
 
 ### 6.1 Data and classifier tool
 
-After cleaning, **240,640** accident records remained (273,614 raw; exclusions documented in `PROGRESS.md`). An 80/20 stratified split yielded 192,512 training and 48,128 test records across ten `DEGREE_INJURY_CD` classes (codes 01–10).
+After cleaning, **240,640** accident records remained (273,614 raw; exclusions documented in `docs/PROGRESS.md`). An 80/20 stratified split yielded 192,512 training and 48,128 test records across ten `DEGREE_INJURY_CD` classes (codes 01–10).
 
 The random forest classifier (`InjuryRiskClassifier`, 100 trees, balanced class weights) achieved on the stratified holdout:
 

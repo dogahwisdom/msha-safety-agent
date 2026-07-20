@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Wisdom
+    given-names: Dogah
+repository-code: "https://github.com/dogahwisdom/msha-safety-agent"
+url: "https://github.com/dogahwisdom/msha-safety-agent"
+license: MIT
+keywords:
+  - mine safety
+  - MSHA
+  - tool-augmented LLM
+  - explainable AI
+  - occupational safety
+preferred-citation:
+  type: article
+  title: "Tool-Augmented Language Model Agents for Explainable Mine Safety Risk Analysis: A Study Using U.S. Mine Safety and Health Administration Data"
+  authors:
+    - family-names: Wisdom
+      given-names: Dogah
