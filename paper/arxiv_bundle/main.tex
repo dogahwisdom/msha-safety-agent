@@ -123,10 +123,13 @@ historical injury narratives from the MSHA Accident, Injury, and Illness
 dataset. The system is compared against a plain classifier baseline and
 a retrieval-augmented generation baseline on answer accuracy, tool
 selection correctness, and latency. On a 60-question benchmark (20
-classification, 20 trend, 20 case-grounded), the tool-augmented agent
-achieves \textbf{93.3\% overall accuracy} in offline tool routing mode,
-versus \textbf{30.0\%} for each baseline, with \textbf{100\% tool
-selection correctness} and mean latency \textbf{0.26\,s} per question.
+classification, 20 trend, 20 case-grounded), the primary evaluation uses a
+live LLM (Llama 3.3 70B via Groq) that selects tools from natural language.
+The tool-augmented agent achieves \textbf{38.3\% overall accuracy} versus
+\textbf{30.0\%} for the classifier baseline and \textbf{28.3\%} for the RAG
+baseline, with 60\% tool selection correctness. All systems attempt every
+question. A deterministic offline router (no LLM reasoning) reaches
+\textbf{93.3\%} accuracy as a zero-cost ablation ceiling only.
 The structured classifier tool alone achieves 0.574 accuracy and 0.562
 macro F1 on a 48{,}128-record holdout over ten injury severity classes.
 Explanation quality assessment using the Explanation Satisfaction Scale
@@ -406,37 +409,54 @@ and macro F1 0.559. These figures are comparable in spirit to prior MSHA
 supervised modeling at similar data scale~\cite{Yedla2020} but are not directly
 comparable across different targets and feature sets.
 
-\subsection{Benchmark accuracy (60 questions)}
+\subsection{Primary benchmark (Groq llama-3.3-70b)}
 
-Three systems were evaluated on the same 60 questions: tool-augmented agent
-(offline routing), classifier baseline, and retrieval-only baseline (semantic
-search without LLM synthesis).
+The primary reported result uses Groq \texttt{llama-3.3-70b-versatile}. The LLM
+plans tool calls from natural language. All three systems attempt all 60
+questions.
 
 \begin{table}[htbp]
   \centering
-  \caption{Benchmark accuracy by question category ($n=20$ per category).}
+  \caption{Primary live LLM benchmark (Groq).}
+  \label{tab:groq}
+  \begin{tabular}{@{}lccccc@{}}
+    \toprule
+    System & Class. & Trend & Case & Overall & Tool sel. \\
+    \midrule
+    Tool-augmented agent & 85.0\% & 5.0\% & 25.0\% & \textbf{38.3\%} & 60.0\% \\
+    Classifier baseline & 90.0\% & 0.0\% & 0.0\% & 30.0\% & 100\% \\
+    RAG baseline & 0.0\% & 0.0\% & 85.0\% & 28.3\% & 98.3\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Mean latency: agent 126\,s, classifier 0.19\,s, RAG 256\,s per question.
+
+\subsection{Offline routing ablation (deterministic, no LLM)}
+
+A separate run uses category metadata to route questions without LLM inference.
+This measures a zero-cost routing ceiling, not live agentic reasoning.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Offline routing ablation ($n=20$ per category).}
   \label{tab:benchmark}
   \begin{tabular}{@{}lcccc@{}}
     \toprule
     System & Classification & Trend & Case-grounded & Overall \\
     \midrule
-    Tool-augmented agent & 90.0\% & \textbf{100.0\%} & 90.0\% & \textbf{93.3\%} \\
+    Offline router & 90.0\% & \textbf{100.0\%} & 90.0\% & \textbf{93.3\%} \\
     Classifier baseline & 90.0\% & 0.0\% & 0.0\% & 30.0\% \\
-    Retrieval-only baseline & 0.0\% & 0.0\% & 90.0\% & 30.0\% \\
+    RAG baseline (no LLM) & 0.0\% & 0.0\% & 90.0\% & 30.0\% \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The agent's advantage over baselines reflects \emph{coverage}: each baseline
-handles only one question type, while the agent routes to the appropriate tool
-for all three. Tool selection correctness for the offline agent was
-\textbf{100\%} (60/60), because routing uses benchmark category metadata; live
-LLM evaluation must infer tool choice from natural language alone.
+The 30\% overall scores for single-tool baselines reflect incorrect answers on
+out-of-strength questions after attempting every question, not category blocking.
+Mean latency: offline router 0.31\,s, classifier 0.22\,s, RAG 0.03\,s.
 
-Mean latency: agent 0.26\,s, classifier baseline 0.18\,s, retrieval baseline
-0.03\,s. No LLM tokens were consumed in the offline run.
-
-\subsection{Failure analysis}
+\subsection{Failure analysis (offline router)}
 
 Four agent failures occurred:
 \begin{enumerate}
@@ -446,37 +466,22 @@ Four agent failures occurred:
     narratives were retrieved but the reference document was not in the top five
     results.
 \end{enumerate}
-Baseline failures on out-of-domain question types are expected by design.
+Baseline failures on out-of-domain question types are expected when a single
+tool is used for every question.
 
 \subsection{Human evaluation}
 
 Materials for the Hoffman et al.~\cite{Hoffman2023} Explanation Satisfaction
 Scale are prepared. Participant ratings are not yet included; data collection at
-the University of Mines and Technology is planned.
+the University of Mines and Technology may proceed now that the primary Groq
+benchmark is complete.
 
-\subsection{Live LLM evaluation (Ollama, local)}
+\subsection{Live LLM evaluation (Ollama, supplementary)}
 \label{sec:live-llm}
 
-A supplementary run used Ollama with \texttt{qwen2.5:7b} on the same 60-question
-benchmark:
-
-\begin{table}[htbp]
-  \centering
-  \caption{Offline tool routing vs.\ local live LLM (Ollama).}
-  \label{tab:ollama}
-  \begin{tabular}{@{}lccc@{}}
-    \toprule
-    System & Overall accuracy & Tool selection & Mean latency \\
-    \midrule
-    Live LLM agent (Ollama) & 53.3\% & 88.3\% & 12.4\,s \\
-    Offline tool agent & \textbf{93.3\%} & \textbf{100\%} & 0.26\,s \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-The smaller local model struggled on trend questions (0\% accuracy) and
-misread some tool outputs. Larger models with reliable function calling are
-recommended for live deployment; see the repository reproduction guide.
+A supplementary run used Ollama with \texttt{qwen2.5:7b} before baseline
+correction (agent 53.3\% overall, 88.3\% tool selection). That run is not
+directly comparable to the corrected Groq comparison above.
 
 \section{Contributions and Limitations}
 \label{sec:discussion}
@@ -484,28 +489,30 @@ recommended for live deployment; see the repository reproduction guide.
 This paper makes three contributions, now supported by implemented code and
 measured results. First, it introduces a tool-augmented LLM agent architecture
 for reasoning over the MSHA accident and injury dataset. Second, on a fixed
-60-question benchmark, the tool-augmented agent achieves 93.3\% accuracy in
-offline routing mode versus 30.0\% for each single-tool baseline, demonstrating
-that multi-tool coverage is necessary for mixed natural language safety
-questions. Third, it prepares the first human evaluation protocol for
-explanation quality in mine safety AI using the Explanation Satisfaction Scale
-of Hoffman et al.~\cite{Hoffman2023}; participant data collection remains
-future work.
+60-question benchmark where every system attempts every question, the live Groq
+agent achieves 38.3\% overall accuracy versus 30.0\% for the classifier baseline
+and 28.3\% for the RAG baseline. Third, it prepares the first human evaluation
+protocol for explanation quality in mine safety AI using the Explanation
+Satisfaction Scale of Hoffman et al.~\cite{Hoffman2023}; participant data
+collection remains future work.
 
 Limitations stated plainly:
 \begin{itemize}
-  \item \textbf{Offline routing:} Primary benchmark numbers use category-based
-    tool routing, not live LLM natural language understanding.
+  \item \textbf{Baseline comparison correction:} An earlier draft restricted
+    each baseline to its home category; the corrected comparison attempts all
+    60 questions with all systems.
+  \item \textbf{Offline routing ablation:} The 93.3\% offline router result uses
+    category metadata, not live LLM reasoning.
+  \item \textbf{Live LLM weakness:} Primary Groq agent accuracy (38.3\%) is far
+    below the offline ablation; trend questions scored 5\%.
   \item \textbf{Geographic scope:} U.S.\ MSHA data only; findings may not transfer
     to Ghana or other regulatory environments without validation.
   \item \textbf{Classifier weakness:} Macro F1 0.562; several severity classes
     (04, 09, 10) have low recall.
   \item \textbf{Retrieval:} Semantic search sometimes returns plausible but
-    incorrect reference documents (two benchmark failures).
+    incorrect reference documents (two offline router failures).
   \item \textbf{Human evaluation:} Protocol prepared; participant data not yet
     collected.
-  \item \textbf{Cost of live LLM:} Not required for reproduction; Groq free tier
-    and Ollama are supported alternatives to paid OpenAI.
 \end{itemize}
 
 \section*{Acknowledgments}

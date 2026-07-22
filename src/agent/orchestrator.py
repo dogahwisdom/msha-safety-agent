@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from src.agent.llm_client import get_llm_client, get_llm_model
+from src.agent.llm_client import chat_completion_with_retry, get_llm_client, get_llm_model
 from src.agent.logging_utils import RunLogger
 from src.agent.prompts import SYSTEM_PROMPT
 from src.agent.tools import TOOL_SCHEMAS, AgentToolExecutor
@@ -54,7 +54,8 @@ class MSHASafetyAgent:
         tools_used: list[str] = []
 
         for _ in range(self.max_tool_rounds):
-            response = self.client.chat.completions.create(
+            response = chat_completion_with_retry(
+                self.client,
                 model=self.model,
                 messages=messages,
                 tools=TOOL_SCHEMAS,

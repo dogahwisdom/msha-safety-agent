@@ -1,4 +1,4 @@
-"""Tool-routing agent without LLM calls (for offline benchmark runs)."""
+"""Tool-routing agent without LLM calls (offline ablation / routing ceiling only)."""
 
 from __future__ import annotations
 

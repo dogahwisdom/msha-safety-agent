@@ -16,8 +16,12 @@ if str(_ROOT) not in sys.path:
 
 RESULTS_PATH = Path(__file__).resolve().parent / "results" / os.environ.get("BENCHMARK_OUTPUT", "benchmark_runs.json")
 REFERENCES_PATH = Path(__file__).resolve().parents[1] / "benchmark" / "reference_answers.json"
-SCORES_PATH = Path(__file__).resolve().parent / "results" / "scores.json"
-FAILURES_PATH = Path(__file__).resolve().parent / "results" / "failure_cases.json"
+_scores_name = os.environ.get("SCORES_OUTPUT")
+if not _scores_name:
+    _bench = os.environ.get("BENCHMARK_OUTPUT", "benchmark_runs.json")
+    _scores_name = "scores.json" if _bench == "benchmark_runs.json" else _bench.replace("benchmark_runs", "scores").replace(".json", ".json")
+SCORES_PATH = Path(__file__).resolve().parent / "results" / _scores_name
+FAILURES_PATH = Path(__file__).resolve().parent / "results" / _scores_name.replace("scores", "failure_cases")
 
 
 def _extract_number(text: str) -> int | None:
@@ -88,11 +92,14 @@ def score_results() -> dict[str, Any]:
         qmeta = questions[row["question_id"]]
         expected_tools = set(qmeta.get("expected_tools", []))
         score = _score_row(row, ref)
-        score["tool_correct"] = set(score["tools_used"]) == expected_tools or (
-            len(expected_tools.intersection(score["tools_used"])) > 0
-            if row["system"] == "agent"
-            else set(score["tools_used"]) == expected_tools
-        )
+        if row["system"] == "agent":
+            score["tool_correct"] = bool(expected_tools.intersection(score["tools_used"]))
+        elif row["system"] == "classifier_baseline":
+            score["tool_correct"] = "classify_injury_risk" in score["tools_used"]
+        elif row["system"] == "rag_baseline":
+            score["tool_correct"] = "search_narratives" in score["tools_used"]
+        else:
+            score["tool_correct"] = set(score["tools_used"]) == expected_tools
         record = {**row, **score, "reference": ref, "expected_tools": list(expected_tools)}
         scored.append(record)
         if not score["correct"] or row.get("error"):

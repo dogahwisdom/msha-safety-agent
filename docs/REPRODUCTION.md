@@ -7,7 +7,8 @@ How to reproduce results from the MSHA Safety Agent paper ([paper_draft.md](pape
 - Python 3.10+
 - ~4 GB disk for raw/processed MSHA data
 - ~2 GB for PyTorch and embedding models (downloaded on first use)
-- LLM API key **optional** (offline mode reproduces paper benchmark numbers)
+- **Groq API key** for the primary live LLM benchmark (free tier at [console.groq.com](https://console.groq.com))
+- Offline routing ablation requires no API key
 
 ## One-command setup
 
@@ -16,6 +17,8 @@ git clone https://github.com/dogahwisdom/msha-safety-agent.git
 cd msha-safety-agent
 bash scripts/setup.sh
 source .venv/bin/activate
+cp .env.example .env
+# Add GROQ_API_KEY to .env for primary benchmark
 ```
 
 `scripts/setup.sh` creates `.venv`, installs dependencies (including PyTorch CPU), registers the Jupyter kernel, and copies `.env.example` to `.env`.
@@ -52,7 +55,7 @@ Run notebooks 01 through 06 in order. Each notebook calls the same modules as th
 | 8 | `python eval/run_benchmark.py` |
 | 9 | `python eval/score.py` |
 
-Or use Make: `make ingest`, `make classifier`, `make index`, `make benchmark`, `make eval`.
+Or use Make: `make ingest`, `make classifier`, `make index`, `make benchmark`, `make eval-groq`.
 
 ### Path C: Automated tests
 
@@ -64,32 +67,30 @@ Run `pytest tests/test_retrieval.py -m slow` for the full-index retrieval check.
 
 ## LLM providers
 
-No paid API is required to reproduce the primary benchmark (93.3% offline agent accuracy).
+### Groq (primary live benchmark)
 
-### Offline tools (paper benchmark)
-
-Deterministic category-based routing — no LLM calls:
-
-```bash
-export LLM_PROVIDER=offline
-python eval/run_benchmark.py
-python eval/score.py
-```
-
-### Groq (recommended for live LLM runs)
-
-Free tier at [console.groq.com](https://console.groq.com) (no credit card). Uses Llama 3.3 70B via an OpenAI-compatible API.
+Free tier at [console.groq.com](https://console.groq.com) (no credit card). Uses Llama 3.3 70B via an OpenAI-compatible API. This is the **primary reported result** in the paper: a live LLM that plans and calls tools.
 
 ```bash
 # .env
 GROQ_API_KEY=gsk_...
 GROQ_MODEL=llama-3.3-70b-versatile
 LLM_PROVIDER=groq
+
+make eval-groq
 ```
 
-Limits: ~30 requests/min, ~1,000 requests/day on 70B — sufficient for one 60-question benchmark.
+Limits: ~30 requests/min, ~1,000 requests/day on 70B. One full 60-question run uses 180 LLM calls (agent + two baselines).
 
-### Ollama (local)
+### Offline deterministic router (ablation only)
+
+Category-based routing with no LLM calls. This is **not** the paper's primary claim about agentic LLM orchestration. It measures a zero-cost routing ceiling when category metadata is available.
+
+```bash
+make eval-offline
+```
+
+### Ollama (local, supplementary)
 
 ```bash
 ollama pull qwen2.5:7b
@@ -97,7 +98,7 @@ export OLLAMA_MODEL=qwen2.5:7b
 export LLM_PROVIDER=ollama
 ```
 
-Supplementary runs with `qwen2.5:7b` scored 53.3% overall (0% on trend questions). Prefer Groq 70B or offline routing for reliable results.
+Prior supplementary runs with `qwen2.5:7b` scored poorly on trend questions. Use Groq 70B for the primary live comparison.
 
 ### OpenAI (paid)
 
@@ -108,7 +109,7 @@ Set `OPENAI_API_KEY` and optionally `OPENAI_MODEL=gpt-4o-mini`.
 1. `OPENAI_API_KEY` → OpenAI
 2. `GROQ_API_KEY` → Groq
 3. Ollama on `localhost:11434` → Ollama
-4. None → offline tool routing
+4. None → offline deterministic router
 
 Force a mode: `LLM_PROVIDER=offline|groq|ollama|openai`
 
@@ -121,8 +122,9 @@ Force a mode: `LLM_PROVIDER=offline|groq|ollama|openai`
 | Classifier metrics | `data/processed/classifier_evaluation.json` |
 | Retrieval index | `data/processed/chroma_narratives/` |
 | Benchmark | `benchmark/questions.json`, `benchmark/reference_answers.json` |
-| System runs | `eval/results/benchmark_runs.json` |
-| Scores | `eval/results/scores.json` |
+| Primary live runs | `eval/results/benchmark_runs_groq_fixed.json` |
+| Offline ablation runs | `eval/results/benchmark_runs_offline_fixed.json` |
+| Scores | `eval/results/scores_groq_fixed.json` (derived from output filename) |
 
 None of these are committed (see `.gitignore`).
 
@@ -138,34 +140,45 @@ None of these are committed (see `.gitignore`).
 
 Out-of-time split (train 2000–2020, test 2021+): accuracy 0.553, macro F1 0.559, fatality recall 0.456. Weak recall on codes 04, 09, and 10. Full per-class tables are in `classifier_evaluation.json` after `make classifier`.
 
-### Benchmark (offline agent, 60 questions)
+**Leakage check:** `DAYS_LOST` and `DAYS_RESTRICT` are not in `CLASSIFIER_FEATURE_COLUMNS`; they are listed in `CLASSIFIER_LEAKAGE_COLUMNS` in `src/data/config.py`.
 
-| System | Overall | Tool selection |
-|--------|---------|----------------|
-| Tool-augmented agent | 93.3% | 100% |
-| Classifier baseline | 30.0% | 33% |
-| Retrieval-only baseline | 30.0% | 33% |
+### Primary benchmark (Groq llama-3.3-70b, 60 questions, corrected baselines)
 
-Single-tool baselines cover one question category each (20/60), so 30% overall is expected.
+Run `make eval-groq` with `GROQ_API_KEY` set. Results are written to `eval/results/benchmark_runs_groq_fixed.json`. Use `bash scripts/run_groq_benchmark.sh` for resumable checkpointed runs.
 
-### Benchmark failure analysis
+All three systems attempt all 60 questions. The classifier baseline always calls `classify_injury_risk` (with inferred defaults when field codes are missing). The RAG baseline always retrieves narratives and passes them to the LLM in one shot.
+
+| System | Classification | Trend | Case grounded | Overall | Tool selection / use |
+|--------|----------------|-------|---------------|---------|---------------------|
+| Tool-augmented agent (Groq) | 85.0% | 5.0% | 25.0% | **38.3%** | 60.0% |
+| Classifier baseline | 90.0% | 0.0% | 0.0% | 30.0% | 100% |
+| RAG baseline | 0.0% | 0.0% | 85.0% | 28.3% | 98.3% |
+
+Mean latency: agent 126 s, classifier 0.19 s, RAG 256 s. Total tokens: agent 69,650, RAG 38,252.
+
+### Offline routing ablation (deterministic, no LLM)
+
+| System | Classification | Trend | Case grounded | Overall | Tool use |
+|--------|----------------|-------|---------------|---------|----------|
+| Offline router | 90.0% | 100.0% | 90.0% | 93.3% | 100% |
+| Classifier baseline | 90.0% | 0.0% | 0.0% | 30.0% | 100% |
+| RAG baseline (no LLM) | 0.0% | 0.0% | 90.0% | 30.0% | 100% |
+
+The 30% overall scores for single-tool baselines reflect failure on out-of-strength questions after **attempting** every question, not structural exclusion. Mean latency: offline router 0.31 s, classifier 0.22 s, RAG 0.03 s.
+
+### Benchmark failure analysis (offline router)
 
 | System | Failures | Cause |
 |--------|----------|-------|
-| Agent (offline) | 4 / 60 | Classifier errors (2), retrieval rank (2) |
-| Classifier baseline | 42 / 60 | Out-of-domain questions by design |
-| Retrieval baseline | 42 / 60 | Out-of-domain questions by design |
-
-**Agent failures:**
-
-- **CLS-03, CLS-14:** Classifier predicted degree code `03`; routing was correct (macro F1: 0.562).
-- **CASE-14, CASE-15:** Semantic retrieval did not rank the reference document in the top five results.
-
-Trend category: 100% (20/20) after filter normalization for fatality counts and hyphenated degree-code forms.
+| Offline router | 4 / 60 | Classifier errors (2), retrieval rank (2) |
+| Classifier baseline | 42 / 60 | Wrong tool for trend/case questions (expected) |
+| RAG baseline (no LLM) | 42 / 60 | Retrieval-only cannot answer counts or degree codes |
 
 ## Human evaluation
 
 Protocol and stimulus builder: `eval/human_eval/materials.md`, `eval/human_eval/build_stimuli.py`.
+
+**Primary Groq benchmark is complete.** Participant collection may proceed after reviewing `docs/paper_draft.md` Section 6.2.
 
 ## Troubleshooting
 
@@ -174,7 +187,8 @@ Protocol and stimulus builder: `eval/human_eval/materials.md`, `eval/human_eval/
 | PyTorch install timeout | Re-run `bash scripts/setup.sh` |
 | `ModuleNotFoundError: src` | Run from repo root or import `notebooks._path_setup` |
 | Retrieval index missing | `make index` or notebook 04 |
-| Agent errors | Set `GROQ_API_KEY`, run Ollama, or `LLM_PROVIDER=offline` |
+| `LLM_PROVIDER=groq but GROQ_API_KEY is not set` | Add key to `.env` |
+| Groq 429 rate limit | Wait and re-run; or split runs by system |
 | CI vs local | GitHub Actions runs ingest + classifier train + pytest |
 
 ## Citation

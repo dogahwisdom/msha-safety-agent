@@ -4,7 +4,7 @@
 
 ## Abstract
 
-Mining remains one of the more hazardous industrial occupations, and safety regulators such as the United States Mine Safety and Health Administration (MSHA) collect large volumes of accident and injury data every year, combining structured fields with free text narratives written by mine operators. Prior work on this dataset has treated it as a supervised learning problem: predicting injury severity or days away from work using logistic regression, decision trees, or neural networks trained on structured fields and, in some cases, the narrative text. These models produce a prediction but not an explanation a safety officer can act on, and none of them let a user ask a follow up question in plain language. Separately, a recent line of work on tool augmented large language model agents has shown that an LLM can plan, call external tools, and reason over heterogeneous operational data in domains such as oil and gas drilling, but this pattern has not yet been applied to occupational mine safety data, and none of the agentic systems in adjacent domains report a human evaluation of the explanations they produce. This paper proposes and evaluates a tool augmented LLM agent that answers natural language safety questions by combining a structured risk classifier, a trend analysis tool, and a retrieval tool over historical injury narratives from the MSHA Accident, Injury, and Illness dataset. The system is compared against a plain classifier baseline and a retrieval augmented generation baseline on answer accuracy, tool selection correctness, and latency. On a 60 question benchmark (20 classification, 20 trend, 20 case grounded), the tool augmented agent achieves **93.3% overall accuracy** in offline tool routing mode, versus **30.0%** for each baseline, with **100% tool selection correctness** and mean latency **0.26 s** per question. The structured classifier tool alone achieves 0.574 accuracy and 0.562 macro F1 on a 48,128 record holdout over ten injury severity classes. Explanation quality assessment using the Explanation Satisfaction Scale of Hoffman et al. (2023) is prepared for mining engineering faculty and senior students; participant data collection is ongoing.
+Mining remains one of the more hazardous industrial occupations, and safety regulators such as the United States Mine Safety and Health Administration (MSHA) collect large volumes of accident and injury data every year, combining structured fields with free text narratives written by mine operators. Prior work on this dataset has treated it as a supervised learning problem: predicting injury severity or days away from work using logistic regression, decision trees, or neural networks trained on structured fields and, in some cases, the narrative text. These models produce a prediction but not an explanation a safety officer can act on, and none of them let a user ask a follow up question in plain language. Separately, a recent line of work on tool augmented large language model agents has shown that an LLM can plan, call external tools, and reason over heterogeneous operational data in domains such as oil and gas drilling, but this pattern has not yet been applied to occupational mine safety data, and none of the agentic systems in adjacent domains report a human evaluation of the explanations they produce. This paper proposes and evaluates a tool augmented LLM agent that answers natural language safety questions by combining a structured risk classifier, a trend analysis tool, and a retrieval tool over historical injury narratives from the MSHA Accident, Injury, and Illness dataset. The system is compared against a plain classifier baseline and a single shot retrieval augmented generation baseline on answer accuracy, tool selection correctness, and latency on a fixed 60 question benchmark (20 classification, 20 trend, 20 case grounded). The **primary evaluation uses a live LLM** (Llama 3.3 70B via Groq) that selects tools from natural language. On this benchmark, the tool augmented agent achieves **38.3% overall accuracy** versus **30.0%** for the classifier baseline and **28.3%** for the RAG baseline, with 60% tool selection correctness. All three systems attempt every question; baselines are not restricted to their home category. The structured classifier tool alone achieves 0.574 accuracy and 0.562 macro F1 on a 48,128 record holdout over ten injury severity classes. A deterministic offline router (no LLM reasoning) reaches 93.3% accuracy as a zero cost ablation ceiling only. Explanation quality assessment using the Explanation Satisfaction Scale of Hoffman et al. (2023) is prepared for mining engineering faculty and senior students; participant data collection is ongoing.
 
 ---
 
@@ -16,7 +16,7 @@ This pattern has two limitations that matter for how the data is actually used i
 
 At the same time, a separate and recent strand of research has demonstrated that large language models can be wrapped in an agent loop that plans which tool to call, executes that tool, and reasons over the result, rather than simply generating a single answer from a prompt. This pattern, sometimes called tool use or tool augmentation, was formalized in general purpose form by Yao et al. (2023) and Schick et al. (2023), and has recently been applied to a real industrial operations problem by Lu (2026), whose TADI system orchestrates twelve domain specific tools over drilling reports and sensor data from an oil field, explicitly avoiding heavyweight agent frameworks in favor of a small, auditable orchestration loop built directly on a large language model provider's function calling interface. As far as we can determine from a review of the mining, safety, and agentic AI literature, this pattern has not yet been applied to mine safety data, and the general MLLM agent literature that does touch on mining, notably the MineAgent system of Wang et al. (2024), addresses mineral exploration from remote sensing imagery rather than occupational safety or operational decision support.
 
-This paper makes three contributions. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, it evaluates this system against two baselines, a direct classifier and a single shot retrieval augmented generation pipeline, on task accuracy, tool selection correctness, and latency on a fixed 60 question benchmark. Third, it provides a human evaluation protocol based on the Explanation Satisfaction Scale of Hoffman et al. (2023) for mining engineering faculty and senior students; participant data collection is in progress.
+This paper makes three contributions. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, it evaluates this system against two baselines on a fixed 60 question benchmark where **every system attempts every question**: a classifier only baseline and a single shot retrieval augmented generation baseline. Third, it provides a human evaluation protocol based on the Explanation Satisfaction Scale of Hoffman et al. (2023) for mining engineering faculty and senior students; participant data collection is in progress.
 
 The remainder of this paper is organized as follows. Section 2 reviews related work on predictive modeling of MSHA data, computer vision and multimodal AI in mining safety, tool augmented LLM agents in industrial domains, and explainability evaluation. Section 3 describes the dataset and preprocessing. Section 4 describes the proposed architecture. Section 5 describes the experimental design and evaluation metrics. Section 6 reports results. Section 7 discusses contributions and limitations. Implementation steps are documented in `docs/REPRODUCTION.md`.
 
@@ -63,17 +63,19 @@ The system follows the general orchestration pattern demonstrated by Lu (2026) f
 
 **Orchestrator.** A large language model receives the user's question, a system prompt describing the three tools, and access to the tools through the provider's native function calling interface. The model selects which tool or sequence of tools to call, receives the tool output, and produces a natural language answer citing which tools were used. This design mirrors the framework free orchestration approach of Lu (2026): a small, auditable control loop rather than a third party agent framework.
 
-**Baselines for comparison.** Two baselines are implemented to make the value of the tool augmented design measurable rather than assumed: a direct classifier baseline, which answers only classification style questions and cannot handle open ended natural language queries, reproducing the approach of prior MSHA studies; and a single shot retrieval augmented generation baseline, which retrieves relevant narrative chunks and passes them to the language model in a single prompt without tool orchestration or access to the trend or classification tools, isolating the effect of tool use and multi step reasoning from the effect of simply adding a language model on top of the data.
+**Baselines for comparison.** Two baselines isolate the value of multi tool orchestration. Both attempt **all 60 benchmark questions**:
+- **Classifier baseline:** always calls the injury severity classifier (using explicit field codes when present, otherwise inferred defaults). It has no trend or retrieval tools and is expected to fail trend and case questions on merit.
+- **RAG baseline:** one retrieval call plus one LLM generation in a single prompt, with no tool orchestration and no access to the trend or classification tools.
 
 ---
 
 ## 5. Experimental Design
 
-**Research questions.** Does tool augmented orchestration improve answer accuracy and usefulness over a direct classifier and over a single shot retrieval augmented generation baseline, for natural language safety questions posed against the MSHA dataset. Does the system correctly select the tool or tools appropriate to a given question. What is the latency and estimated cost per query, and how does this scale with question complexity. Do mining engineering domain experts rate the system's explanations as satisfactory and trustworthy using a validated instrument, and does this rating differ meaningfully from their rating of the baseline systems' outputs.
+**Research questions.** Does tool augmented orchestration improve answer accuracy and usefulness over a direct classifier and over a single shot retrieval augmented generation baseline, for natural language safety questions posed against the MSHA dataset. Does the live LLM agent correctly select the tool or tools appropriate to a given question. What is the latency and estimated cost per query, and how does this scale with question complexity. Do mining engineering domain experts rate the system's explanations as satisfactory and trustworthy using a validated instrument, and does this rating differ meaningfully from their rating of the baseline systems' outputs.
 
 **Benchmark construction.** Sixty natural language questions were authored in three equal categories: classification style questions with explicit MSHA field codes, trend and comparison questions requiring aggregation, and case grounded questions requiring retrieval of similar historical incidents. Reference answers were derived from cleaned data and tool outputs before any benchmark run, so accuracy is scored against fixed ground truth.
 
-**Quantitative metrics.** Task accuracy (proportion correct per category and overall), tool selection correctness (invoked tools vs. expected tools per question), latency (wall clock time per query), and token cost for live LLM runs.
+**Quantitative metrics.** Task accuracy (proportion correct per category and overall), tool selection correctness for the agent (whether the invoked tools match the question type), baseline tool use rate (whether each baseline invoked its single available tool), latency (wall clock time per query), and token cost for live LLM runs.
 
 **Human evaluation.** Mining engineering faculty and senior students at the University of Mines and Technology will rate blinded question–answer pairs using the Explanation Satisfaction Scale (Hoffman et al., 2023). Target sample: 10–20 participants; results will be reported descriptively as an exploratory study.
 
@@ -83,7 +85,7 @@ The system follows the general orchestration pattern demonstrated by Lu (2026) f
 
 ## 6. Results
 
-All quantitative results were produced from the open source implementation. Benchmark questions and reference answers were fixed before evaluation. The primary agent evaluation used deterministic tool routing without LLM inference, isolating tool correctness at zero API cost. Supplementary live LLM runs (local Ollama and optional cloud providers) are reported in Section 6.5.
+All quantitative results were produced from the open source implementation. Benchmark questions and reference answers were fixed before evaluation.
 
 ### 6.1 Data and classifier tool
 
@@ -100,58 +102,63 @@ The random forest classifier (`InjuryRiskClassifier`, 100 trees, balanced class 
 
 Out-of-time evaluation (train 2000–2020, test 2021+) yielded accuracy 0.553 and macro F1 0.559. These figures are comparable in spirit to prior MSHA supervised modeling at similar data scale (Yedla et al., 2020) but are not directly comparable across different targets and feature sets.
 
-### 6.2 Benchmark accuracy (60 questions)
+**Feature leakage check:** `CLASSIFIER_FEATURE_COLUMNS` in `src/data/config.py` contains ten structured MSHA field codes only. `DAYS_LOST` and `DAYS_RESTRICT` are excluded via `CLASSIFIER_LEAKAGE_COLUMNS`.
 
-Three systems were evaluated on the same 60 questions: tool augmented agent (offline routing), classifier baseline, and retrieval only baseline (semantic search without LLM synthesis).
+### 6.2 Primary benchmark (live LLM agent, Groq llama-3.3-70b)
 
-| System | Classification (n=20) | Trend (n=20) | Case grounded (n=20) | Overall |
-|--------|----------------------|--------------|----------------------|---------|
-| Tool augmented agent | 90.0% | **100.0%** | 90.0% | **93.3%** |
-| Classifier baseline | 90.0% | 0.0% | 0.0% | 30.0% |
-| Retrieval only baseline | 0.0% | 0.0% | 90.0% | 30.0% |
+The primary reported result uses `LLM_PROVIDER=groq` with `llama-3.3-70b-versatile`. The LLM plans tool calls from natural language; this is the evaluation that tests the paper's claim about agentic orchestration. Reproduce with `make eval-groq` (see `docs/REPRODUCTION.md`). The run used per-question checkpointing and Groq rate-limit retries; mean agent latency was 126 s per question.
 
-The agent's advantage over baselines reflects **coverage**: each baseline handles only one question type, while the agent routes to the appropriate tool for all three. Tool selection correctness for the offline agent was **100%** (60/60), because routing uses benchmark category metadata; live LLM evaluation must infer tool choice from natural language alone.
+| System | Classification (n=20) | Trend (n=20) | Case grounded (n=20) | Overall | Tool selection |
+|--------|----------------------|--------------|----------------------|---------|----------------|
+| Tool augmented agent (Groq) | 85.0% | 5.0% | 25.0% | **38.3%** | 60.0% |
+| Classifier baseline | 90.0% | 0.0% | 0.0% | 30.0% | 100% use |
+| RAG baseline | 0.0% | 0.0% | 85.0% | 28.3% | 98.3% use |
 
-Mean latency: agent 0.26 s, classifier baseline 0.18 s, retrieval baseline 0.03 s. No LLM tokens were consumed in the offline run.
+All three systems attempt all 60 questions. The live agent exceeds both single-tool baselines on overall accuracy but remains weak on trend questions (5%), where tool outputs require correct numeric parsing from natural language.
 
-### 6.3 Failure analysis
+### 6.3 Offline routing ablation (deterministic, no LLM)
 
-Four agent failures occurred:
+A separate run uses category metadata to route questions to tools without any LLM inference. This measures a **zero cost routing ceiling**, not live agentic reasoning.
 
-1. **Two classification errors (CLS-03, CLS-14):** classifier predicted degree code 03 instead of the reference code — a model accuracy issue, not a routing failure.
+| System | Classification (n=20) | Trend (n=20) | Case grounded (n=20) | Overall | Tool use |
+|--------|----------------------|--------------|----------------------|---------|----------|
+| Offline router | 90.0% | 100.0% | 90.0% | 93.3% | 100% |
+| Classifier baseline | 90.0% | 0.0% | 0.0% | 30.0% | 100% |
+| RAG baseline (no LLM) | 0.0% | 0.0% | 90.0% | 30.0% | 100% |
+
+The 30% overall scores for single tool baselines reflect incorrect answers on out of strength questions after attempting every question, not category blocking. Mean latency: offline router 0.31 s, classifier 0.22 s, RAG 0.03 s.
+
+### 6.4 Failure analysis (offline router)
+
+Four offline router failures occurred:
+
+1. **Two classification errors (CLS-03, CLS-14):** classifier predicted degree code 03 instead of the reference code.
 2. **Two retrieval errors (CASE-14, CASE-15):** semantically similar narratives were retrieved but the reference document was not in the top five results.
 
-Baseline failures on out-of-domain question types are expected by design.
+### 6.5 Human evaluation
 
-### 6.4 Human evaluation
+Materials for the Hoffman et al. (2023) Explanation Satisfaction Scale are prepared. Participant ratings are not yet included; data collection at the University of Mines and Technology may proceed now that the primary Groq benchmark is complete.
 
-Materials for the Hoffman et al. (2023) Explanation Satisfaction Scale are prepared. Participant ratings are not yet included; data collection at the University of Mines and Technology is planned.
+### 6.6 Live LLM evaluation (Ollama qwen2.5:7b, supplementary)
 
-### 6.5 Live LLM evaluation (Ollama, local)
-
-A supplementary run used **Ollama** with `qwen2.5:7b` on the same 60 question benchmark:
-
-| System | Overall accuracy | Tool selection | Mean latency |
-|--------|------------------|----------------|--------------|
-| Live LLM agent (Ollama) | 53.3% | 88.3% | 12.4 s |
-| Offline tool agent | **93.3%** | **100%** | 0.26 s |
-
-The smaller local model struggled on trend questions (0% accuracy) and misread some tool outputs. Llama 3.3 70B via Groq is recommended over local 7B models for live function calling; see `docs/REPRODUCTION.md`.
+A supplementary run used **Ollama** with `qwen2.5:7b` on the same 60 question benchmark before baseline correction (agent 53.3% overall, 88.3% tool selection, 12.4 s mean latency). That run is not directly comparable to the corrected Groq comparison above. The smaller local model struggled on trend questions. Groq llama-3.3-70b is used for the primary live comparison.
 
 ---
 
 ## 7. Contributions and Limitations
 
-This paper makes three contributions, now supported by implemented code and measured results. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, on a fixed 60 question benchmark, the tool augmented agent achieves 93.3% accuracy in offline routing mode versus 30.0% for each single tool baseline, demonstrating that multi tool coverage is necessary for mixed natural language safety questions. Third, it prepares the first human evaluation protocol for explanation quality in mine safety AI using the Explanation Satisfaction Scale of Hoffman et al. (2023); participant data collection remains future work.
+This paper makes three contributions, now supported by implemented code and measured results. First, it introduces a tool augmented LLM agent architecture for reasoning over the MSHA accident and injury dataset, combining a structured classifier, a statistical trend tool, and a retrieval tool over incident narratives, following the transparent, framework free orchestration design demonstrated by Lu (2026) in a different industrial domain. Second, on a fixed 60 question benchmark where every system attempts every question, the live Groq agent achieves 38.3% overall accuracy versus 30.0% for the classifier baseline and 28.3% for the RAG baseline, with tool selection correctness at 60%. Third, it prepares the first human evaluation protocol for explanation quality in mine safety AI using the Explanation Satisfaction Scale of Hoffman et al. (2023); participant data collection remains future work.
 
 Limitations stated plainly:
 
-- **Offline routing:** Primary benchmark numbers use category based tool routing, not live LLM natural language understanding. Live LLM evaluation may show lower tool selection accuracy and hallucination risk.
+- **Baseline comparison correction:** An earlier draft restricted each single tool baseline to its home question category, which made the 93.3% versus 30% comparison structurally biased. That flaw was identified before publication. The corrected comparison in this version attempts all 60 questions with all systems; the 30% single tool scores (when they appear) reflect failure on merit, not exclusion.
+- **Offline routing ablation:** The 93.3% offline router result uses category metadata, not live LLM reasoning. It is reported only as a zero cost ablation ceiling.
 - **Geographic scope:** U.S. MSHA data only; findings may not transfer to Ghana or other regulatory environments without validation.
 - **Classifier weakness:** Macro F1 0.562; several severity classes (04, 09, 10) have low recall.
-- **Retrieval:** Semantic search sometimes returns plausible but incorrect reference documents (two benchmark failures).
+- **Retrieval:** Semantic search sometimes returns plausible but incorrect reference documents (two offline router failures).
 - **Human evaluation:** Protocol prepared; participant data not yet collected.
-- **Cost of live LLM:** Not required for reproduction; Groq free tier and Ollama are supported alternatives to paid OpenAI.
+- **Live LLM weakness:** Primary Groq agent accuracy (38.3%) is far below the offline routing ablation (93.3%). Trend questions scored 5%; tool selection was 60%.
+- **Groq rate limits:** Free tier required checkpointed runs over multiple sessions and retry backoff.
 
 ---
 

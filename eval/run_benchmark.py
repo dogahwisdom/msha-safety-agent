@@ -19,7 +19,6 @@ from src.agent.orchestrator import MSHASafetyAgent
 from src.baselines.classifier_baseline import ClassifierBaseline
 from src.baselines.offline_tool_agent import OfflineToolAgent
 from src.baselines.rag_baseline import RAGBaseline
-from src.baselines.retrieval_only_baseline import RetrievalOnlyBaseline
 
 BENCHMARK_DIR = _ROOT / "benchmark"
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
@@ -30,6 +29,34 @@ def _load_questions() -> list[dict[str, Any]]:
     return payload["questions"]
 
 
+def _checkpoint_path() -> Path | None:
+    raw = os.environ.get("BENCHMARK_CHECKPOINT", "").strip()
+    return Path(raw) if raw else None
+
+
+def _load_checkpoint() -> set[tuple[str, str]]:
+    path = _checkpoint_path()
+    if path is None or not path.exists():
+        return set()
+    done: set[tuple[str, str]] = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        done.add((row["system"], row["question_id"]))
+    return done
+
+
+def _append_checkpoint(row: dict[str, Any]) -> None:
+    path = _checkpoint_path()
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+        handle.flush()
+
+
 def _run_system(
     name: str,
     answer_fn: Callable[..., dict[str, Any]],
@@ -37,8 +64,11 @@ def _run_system(
     *,
     pass_category: bool = False,
 ) -> list[dict]:
+    done = _load_checkpoint()
     rows = []
     for item in questions:
+        if (name, item["id"]) in done:
+            continue
         logger = RunLogger(name, log_dir=RESULTS_DIR / "logs")
         start = time.time()
         try:
@@ -51,20 +81,20 @@ def _run_system(
             result = {"answer": "", "tools_used": [], "usage": {}, "log_path": str(logger.log_path)}
             error = str(exc)
         latency_s = round(time.time() - start, 3)
-        rows.append(
-            {
-                "question_id": item["id"],
-                "category": item["category"],
-                "question": item["question"],
-                "system": name,
-                "answer": result.get("answer", ""),
-                "tools_used": result.get("tools_used", []),
-                "usage": result.get("usage", {}),
-                "latency_s": latency_s,
-                "log_path": result.get("log_path"),
-                "error": error,
-            }
-        )
+        row = {
+            "question_id": item["id"],
+            "category": item["category"],
+            "question": item["question"],
+            "system": name,
+            "answer": result.get("answer", ""),
+            "tools_used": result.get("tools_used", []),
+            "usage": result.get("usage", {}),
+            "latency_s": latency_s,
+            "log_path": result.get("log_path"),
+            "error": error,
+        }
+        rows.append(row)
+        _append_checkpoint(row)
     return rows
 
 
@@ -74,20 +104,29 @@ def _systems() -> dict[str, tuple[Callable[..., dict[str, Any]], bool]]:
         agent = MSHASafetyAgent()
         classifier = ClassifierBaseline()
         rag = RAGBaseline()
-        return {
+        systems = {
             "agent": (lambda q, lg, category="": agent.answer(q, logger=lg), False),
             "classifier_baseline": (lambda q, lg, category="": classifier.answer(q, logger=lg), False),
             "rag_baseline": (lambda q, lg, category="": rag.answer(q, logger=lg), False),
         }
+    else:
+        offline = OfflineToolAgent()
+        classifier = ClassifierBaseline()
+        rag = RAGBaseline()
+        systems = {
+            "agent": (lambda q, lg, category="": offline.answer(q, logger=lg, category=category), True),
+            "classifier_baseline": (lambda q, lg, category="": classifier.answer(q, logger=lg), False),
+            "rag_baseline": (lambda q, lg, category="": rag.answer(q, logger=lg), False),
+        }
 
-    offline = OfflineToolAgent()
-    retrieval_only = RetrievalOnlyBaseline()
-    classifier = ClassifierBaseline()
-    return {
-        "agent": (lambda q, lg, category="": offline.answer(q, logger=lg, category=category), True),
-        "classifier_baseline": (lambda q, lg, category="": classifier.answer(q, logger=lg), False),
-        "rag_baseline": (lambda q, lg, category="": retrieval_only.answer(q, logger=lg), False),
-    }
+    only = os.environ.get("BENCHMARK_SYSTEMS", "").strip()
+    if only:
+        names = {part.strip() for part in only.split(",") if part.strip()}
+        unknown = names - set(systems)
+        if unknown:
+            raise ValueError(f"Unknown BENCHMARK_SYSTEMS entries: {sorted(unknown)}")
+        systems = {name: systems[name] for name in systems if name in names}
+    return systems
 
 
 def run_all() -> dict[str, Any]:

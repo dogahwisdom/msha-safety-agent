@@ -24,11 +24,13 @@ def test_classifier_baseline_parses_structured_question(baseline: ClassifierBase
     )
     result = baseline.answer(question)
     assert result["tools_used"] == ["classify_injury_risk"]
-    assert "Predicted injury degree code:" in result["answer"]
+    assert "predicted injury degree code" in result["answer"].lower()
 
 
-def test_classifier_baseline_rejects_open_ended_question() -> None:
+def test_classifier_baseline_attempts_open_ended_question() -> None:
     baseline = ClassifierBaseline()
+    if not CLASSIFIER_MODEL_PATH.exists():
+        pytest.skip("Run python -m src.tools.run_classifier first")
     result = baseline.answer("How many fatalities occurred in 2015?")
-    assert result["tools_used"] == []
-    assert "only handles classification" in result["answer"]
+    assert result["tools_used"] == ["classify_injury_risk"]
+    assert "classifier-only baseline" in result["answer"].lower()

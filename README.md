@@ -22,15 +22,25 @@ Instead of a black-box severity predictor, this system routes natural-language s
 | **Trend analyzer** | Counts, year-over-year changes, period comparisons |
 | **Narrative retriever** | Semantic search over 240k+ incident narratives |
 
-An LLM orchestrator (Groq, Ollama, or OpenAI) selects tools via function calling. A **zero-cost offline mode** routes by question category for reproducible paper numbers.
+An LLM orchestrator (Groq, Ollama, or OpenAI) selects tools via function calling. **Offline mode** is a deterministic routing ablation (no LLM reasoning), not the primary benchmark.
 
-### Benchmark results (60 questions)
+### Benchmark results
 
-| System | Overall accuracy | Tool selection |
-|--------|------------------|----------------|
-| Tool-augmented agent (offline) | **93.3%** | 100% |
-| Classifier baseline | 30.0% | 33% |
-| Retrieval-only baseline | 30.0% | 33% |
+**Primary (Groq llama-3.3-70b, live LLM, all 60 questions attempted):**
+
+| System | Overall | Tool selection |
+|--------|---------|----------------|
+| Tool-augmented agent | **38.3%** | 60.0% |
+| Classifier baseline | 30.0% | 100% use |
+| RAG baseline | 28.3% | 98.3% use |
+
+**Offline ablation** (deterministic router, zero API cost):
+
+| System | Overall accuracy | Tool use |
+|--------|------------------|----------|
+| Offline router | 93.3% | 100% |
+| Classifier baseline | 30.0% | 100% |
+| RAG baseline, no LLM | 30.0% | 100% |
 
 Classifier holdout: **0.574** accuracy, **0.562** macro F1 on 48,128 test records.
 
@@ -61,11 +71,18 @@ source .venv/bin/activate
 make ingest && make classifier && make test
 ```
 
-Reproduce the paper benchmark (no API key):
+Reproduce the offline routing ablation (no API key):
 
 ```bash
 export LLM_PROVIDER=offline
-make eval
+make eval-offline
+```
+
+Primary live benchmark (Groq, free tier):
+
+```bash
+# Add GROQ_API_KEY to .env first
+make eval-groq
 ```
 
 Or use Jupyter: `make notebook` → run notebooks `01`–`06` in order.

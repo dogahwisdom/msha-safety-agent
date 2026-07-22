@@ -1,4 +1,4 @@
-.PHONY: setup ingest test test-all notebook classifier index benchmark eval paper help
+.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq paper help
 
 help:
 	@echo "MSHA Safety Agent — common targets"
@@ -36,6 +36,16 @@ benchmark:
 eval:
 	.venv/bin/python eval/run_benchmark.py
 	.venv/bin/python eval/score.py
+
+eval-offline:
+	LLM_PROVIDER=offline BENCHMARK_OUTPUT=benchmark_runs_offline.json \
+		.venv/bin/python eval/run_benchmark.py
+	BENCHMARK_OUTPUT=benchmark_runs_offline.json \
+		.venv/bin/python eval/score.py
+
+eval-groq:
+	GROQ_BENCHMARK_DELAY_S=2.5 BENCHMARK_CHECKPOINT=eval/results/benchmark_runs_groq_partial.jsonl \
+		bash scripts/run_groq_benchmark.sh
 
 notebook:
 	.venv/bin/jupyter lab notebooks/
