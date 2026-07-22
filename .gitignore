@@ -27,6 +27,8 @@ build/
 *.joblib
 eval/results/
 eval/logs/
+eval/human_eval/generated/
+eval/human_eval/responses/
 data/processed/chroma_narratives/
 .chromadb/
 *.sqlite3

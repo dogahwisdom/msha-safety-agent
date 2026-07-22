@@ -13,15 +13,23 @@ Participants rate blinded answers from three systems (tool-augmented agent, clas
 
 ## Procedure
 
-1. Randomize and blind answer order per participant using `eval/human_eval/build_stimuli.py` after benchmark answers exist.
-2. Present one question and one system answer at a time.
-3. After each answer, administer the nine Explanation Satisfaction Scale items on a 1 to 5 Likert scale:
+1. Run the Groq primary benchmark (`make eval-groq`) if `eval/results/benchmark_runs_groq_fixed.json` is not present locally.
+2. Generate blinded packets:
+   ```bash
+   make human-eval-stimuli
+   ```
+   Outputs land in `eval/human_eval/generated/`:
+   - `packets/P001_packet.md` ... participant-facing stimuli (10 default packets)
+   - `response_templates/P001_responses.csv` ... empty rating sheets
+   - `randomization_key.csv` ... researcher only; do not share with participants
+3. Present one question and one system answer at a time.
+4. After each answer, administer the nine Explanation Satisfaction Scale items on a 1 to 5 Likert scale:
    - 5 = I agree strongly
    - 4 = I agree somewhat
    - 3 = I'm neutral about it
    - 2 = I disagree somewhat
    - 1 = I disagree strongly
-4. Collect optional open comment: "What was missing from this explanation?"
+5. Collect optional open comment: "What was missing from this explanation?"
 
 ## Explanation Satisfaction Scale (Hoffman et al., 2023)
 

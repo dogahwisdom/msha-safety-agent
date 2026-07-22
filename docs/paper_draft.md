@@ -137,7 +137,9 @@ Four offline router failures occurred:
 
 ### 6.5 Human evaluation
 
-Materials for the Hoffman et al. (2023) Explanation Satisfaction Scale are prepared. Participant ratings are not yet included; data collection at the University of Mines and Technology may proceed now that the primary Groq benchmark is complete.
+Blinded survey materials are generated from the Groq primary benchmark (`make human-eval-stimuli`). Each participant packet contains 12 stratified questions (four per category) with three blinded system answers each (36 ratings total). Ten participant packets (`P001`–`P010`) and empty response templates are under `eval/human_eval/generated/`. The Explanation Satisfaction Scale items follow Hoffman et al. (2023); see `eval/human_eval/materials.md` and `eval/human_eval/facilitator_guide.md`.
+
+**Participant ratings are not yet included.** Data collection at the University of Mines and Technology requires in-person or survey sessions with real mining engineering faculty and senior students. After collection, aggregate responses with `eval/human_eval/score_responses.py` and report descriptive ESS means by system.
 
 ### 6.6 Live LLM evaluation (Ollama qwen2.5:7b, supplementary)
 

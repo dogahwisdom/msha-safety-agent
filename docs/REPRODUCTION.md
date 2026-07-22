@@ -176,9 +176,24 @@ The 30% overall scores for single-tool baselines reflect failure on out-of-stren
 
 ## Human evaluation
 
-Protocol and stimulus builder: `eval/human_eval/materials.md`, `eval/human_eval/build_stimuli.py`.
+Protocol: `eval/human_eval/materials.md`  
+Facilitator guide: `eval/human_eval/facilitator_guide.md`  
+Stimulus builder: `eval/human_eval/build_stimuli.py`  
+Response aggregation (after real collection): `eval/human_eval/score_responses.py`
 
-**Primary Groq benchmark is complete.** Participant collection may proceed after reviewing `docs/paper_draft.md` Section 6.2.
+Generate blinded survey packets from the Groq primary benchmark:
+
+```bash
+make human-eval-stimuli
+```
+
+This writes 10 participant packets (12 questions each, 36 ratings per person) under `eval/human_eval/generated/`. **Do not simulate participant ratings in code.** After you collect real responses, score them with:
+
+```bash
+.venv/bin/python eval/human_eval/score_responses.py eval/human_eval/responses/*.csv
+```
+
+**Primary Groq benchmark is complete.** Participant collection may proceed using the generated materials.
 
 ## Troubleshooting
 

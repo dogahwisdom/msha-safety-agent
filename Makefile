@@ -1,4 +1,4 @@
-.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq paper help
+.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq human-eval-stimuli paper help
 
 help:
 	@echo "MSHA Safety Agent — common targets"
@@ -8,7 +8,8 @@ help:
 	@echo "  make classifier Train classifier (Step 2)"
 	@echo "  make index      Build narrative retrieval index (Step 4)"
 	@echo "  make benchmark  Build benchmark questions (Step 7)"
-	@echo "  make eval       Run benchmark + score (Steps 8–9, respects LLM_PROVIDER)"
+	@echo "  make eval-groq   Resumable Groq benchmark (Steps 8–9, primary result)"
+	@echo "  make human-eval-stimuli  Build blinded ESS survey packets (Step 10)"
 	@echo "  make paper      Build LaTeX manuscript PDF + arXiv tarball"
 	@echo "  make notebook   Start JupyterLab in notebooks/"
 
@@ -46,6 +47,9 @@ eval-offline:
 eval-groq:
 	GROQ_BENCHMARK_DELAY_S=2.5 BENCHMARK_CHECKPOINT=eval/results/benchmark_runs_groq_partial.jsonl \
 		bash scripts/run_groq_benchmark.sh
+
+human-eval-stimuli:
+	.venv/bin/python eval/human_eval/build_stimuli.py --participants 10
 
 notebook:
 	.venv/bin/jupyter lab notebooks/
