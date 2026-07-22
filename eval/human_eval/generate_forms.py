@@ -22,6 +22,7 @@ from eval.human_eval.form_data import (
     QuestionSection,
     StimulusBlock,
     consent_page_text,
+    format_answer_for_display,
     form_description,
     form_title,
     group_blocks_by_question,
@@ -87,12 +88,13 @@ def _page_break_item(title: str, *, description: str = "") -> dict[str, Any]:
     return item
 
 
-def _comment_question_item(stimulus_id: str) -> dict[str, Any]:
+def _comment_question_item(stimulus_id: str, system_label: str) -> dict[str, Any]:
     return {
         "title": "Optional comment",
         "description": (
             f"Response ID: {stimulus_id}. "
-            "What was missing from this explanation? (Optional)"
+            f"What was missing or unclear in System {system_label}'s explanation? "
+            "(Optional)"
         ),
         "questionItem": {
             "question": {
@@ -104,25 +106,27 @@ def _comment_question_item(stimulus_id: str) -> dict[str, Any]:
 
 
 def _answer_block_requests(answer: StimulusBlock) -> list[dict[str, Any]]:
+    label = answer.system_blinded_label
+    display_text = format_answer_for_display(answer.answer_text)
     return [
         {
             "createItem": {
                 "item": _text_block_item(
-                    f"System {answer.system_blinded_label}",
-                    answer.answer_text,
+                    f"System {label}: explanation to rate",
+                    display_text,
                 ),
             }
         },
         {
             "createItem": {
                 "item": _grid_question_item(
-                    f"Explanation Satisfaction Scale (Response {answer.stimulus_id})"
+                    f"Rate System {label}'s explanation (Response {answer.stimulus_id})"
                 ),
             }
         },
         {
             "createItem": {
-                "item": _comment_question_item(answer.stimulus_id),
+                "item": _comment_question_item(answer.stimulus_id, label),
             }
         },
     ]
@@ -207,9 +211,12 @@ def build_create_requests(
             {
                 "createItem": {
                     "item": _page_break_item(
-                        f"Question {section_number} of {total_questions}",
+                        f"Mine safety question {section_number} of {total_questions} "
+                        "(context only)",
                         description=(
-                            f"Category: {section.category}\n\n{section.question}"
+                            "Do not rate this section.\n\n"
+                            f"Category: {section.category}\n\n"
+                            f"{section.question}"
                         ),
                     ),
                 }

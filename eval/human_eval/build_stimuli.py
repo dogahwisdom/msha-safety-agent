@@ -6,15 +6,21 @@ import argparse
 import csv
 import json
 import random
+import sys
 from collections import defaultdict
 from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parents[2]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from eval.human_eval.form_data import ESS_ITEMS, format_answer_for_display
 
 DEFAULT_RESULTS = (
     Path(__file__).resolve().parents[1] / "results" / "benchmark_runs_groq_fixed.json"
 )
 OUT_DIR = Path(__file__).resolve().parent / "generated"
 SYSTEM_LABELS = ("A", "B", "C")
-ESS_ITEMS = tuple(f"ESS-{idx}" for idx in range(1, 10))
 
 
 def load_benchmark_rows(results_path: Path) -> list[dict]:
@@ -90,7 +96,7 @@ def build_stimulus_rows(
                     "category": category,
                     "system_blinded_label": blind,
                     "question": question_text,
-                    "answer_text": row["answer"],
+                    "answer_text": format_answer_for_display(row["answer"]),
                 }
             )
             mapping.append(
@@ -193,7 +199,7 @@ def write_participant_packet(
         )
         for item in ESS_ITEMS:
             lines.append(f"- {item}: ____")
-        lines.extend(["", "**Optional comment:** What was missing from this explanation?", "", ""])
+        lines.extend(["", "**Optional comment:** What was missing or unclear in this system's explanation?", "", ""])
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")
 

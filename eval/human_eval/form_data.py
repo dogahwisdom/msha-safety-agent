@@ -38,6 +38,15 @@ CONSENT_CHECKBOX_TEXT = (
     "ask questions, and I agree to participate."
 )
 
+EMPTY_ANSWER_PLACEHOLDER = "[No response was generated.]"
+
+
+def format_answer_for_display(answer_text: str) -> str:
+    text = (answer_text or "").strip()
+    if not text:
+        return EMPTY_ANSWER_PLACEHOLDER
+    return text
+
 
 @dataclass(frozen=True)
 class StimulusBlock:
@@ -137,16 +146,19 @@ def welcome_page_text() -> str:
         "which explanations are clear, complete, and trustworthy. "
         f"{TRANSPARENCY_LINE}\n\n"
         "What you will do\n"
-        "1. Read 12 mine safety questions.\n"
-        "2. Review three blinded explanations for each question (System A, System B, System C).\n"
+        "1. Read 12 mine safety questions for context.\n"
+        "2. Review three blinded system explanations for each question "
+        "(System A, System B, System C).\n"
         "3. Rate nine Explanation Satisfaction Scale statements about each explanation "
         "using a 1 to 5 scale.\n"
         "4. Optionally leave a short comment if something was missing from an explanation.\n\n"
         "Important\n"
-        "1. You are rating explanation quality, not whether the factual answer is correct.\n"
-        "2. The three systems are blinded. Do not try to guess which system produced each explanation.\n"
-        "3. There are 36 rating blocks in total (12 questions, 3 systems each).\n"
-        "4. You may pause and return later if needed.\n\n"
+        "1. Each System A, B, or C box is that system's explanation. Rate only that text, "
+        "not the mine safety question above it.\n"
+        "2. You are rating explanation quality, not whether the factual answer is correct.\n"
+        "3. The three systems are blinded. Do not try to guess which system produced each explanation.\n"
+        "4. There are 36 rating blocks in total (12 questions, 3 systems each).\n"
+        "5. You may pause and return later if needed.\n\n"
         "Eligibility\n"
         "Mining engineering faculty or senior undergraduate students at UMaT.\n\n"
         "Continue to the next page for the informed consent statement."
@@ -181,21 +193,27 @@ def rating_instructions_text() -> str:
         f"{idx + 1}. {ESS_STATEMENTS[item]}" for idx, item in enumerate(ESS_ITEMS[:3])
     )
     return (
-        "For each answer (System A, B, or C), please follow these steps:\n"
-        "1. Read the question and the system explanation carefully.\n"
-        "2. Complete all nine Explanation Satisfaction Scale (ESS) statements for that answer.\n"
+        "For each system (System A, B, or C), please follow these steps:\n\n"
+        "Each box labeled System A, B, or C is that system's explanation. "
+        "Rate only that text, not the mine safety question shown above it.\n\n"
+        "1. Read the mine safety question for context, then read the system explanation.\n"
+        "2. Complete all nine Explanation Satisfaction Scale (ESS) statements for that "
+        "explanation.\n"
         "3. Add an optional comment if the scale does not capture something important.\n\n"
         "Rating scale:\n"
         f"{scale_lines}\n\n"
-        "Sample ESS statements (all nine appear after each answer):\n"
+        "Sample ESS statements (all nine appear after each explanation):\n"
         f"{ess_preview}\n"
         "4. Six additional statements cover completeness, accuracy, reliability, "
         "usability, usefulness, and trust.\n\n"
         "Guidance:\n"
         "1. Rate the explanation shown, not outside knowledge.\n"
-        "2. If an answer is vague, rate how clearly the system explained its reasoning.\n"
-        "3. Use the comment box for anything not covered by the nine statements.\n\n"
-        "When you are ready, continue to Question 1."
+        "2. Some responses may be very short, say the system cannot answer, or only "
+        "give a number. Still rate how well that response explains what the system did "
+        "and whether you would trust it.\n"
+        "3. If a response is vague, rate how clearly the system explained its reasoning.\n"
+        "4. Use the comment box for anything not covered by the nine statements.\n\n"
+        "When you are ready, continue to the first mine safety question."
     )
 
 

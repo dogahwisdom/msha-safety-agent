@@ -31,7 +31,7 @@ Participants rate blinded answers from three systems (tool-augmented agent, clas
    - 3 = I'm neutral about it
    - 2 = I disagree somewhat
    - 1 = I disagree strongly
-5. Collect optional open comment: "What was missing from this explanation?"
+5. Collect optional open comment: "What was missing or unclear in this system's explanation?"
 
 ## Explanation Satisfaction Scale (Hoffman et al., 2023)
 

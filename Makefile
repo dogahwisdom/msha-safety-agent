@@ -1,4 +1,4 @@
-.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq human-eval-stimuli human-eval-oauth human-eval-forms human-eval-forms-all human-eval-forms-extended human-eval-portal significance-test paper help
+.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq human-eval-stimuli human-eval-oauth human-eval-forms human-eval-forms-all human-eval-forms-extended human-eval-forms-refresh human-eval-portal significance-test paper help
 
 help:
 	@echo "MSHA Safety Agent — common targets"
@@ -69,6 +69,11 @@ human-eval-forms-all:
 human-eval-forms-extended:
 	.venv/bin/python eval/human_eval/generate_forms.py --participants P011 P012 P013 P014 P015 P016 P017 P018 P019 P020 --append-links
 	$(MAKE) human-eval-portal
+
+human-eval-forms-refresh:
+	.venv/bin/python eval/human_eval/generate_forms.py --participants \
+		P001 P002 P003 P004 P005 P006 P007 P008 P009 P010 \
+		P011 P012 P013 P014 P015 P016 P017 P018 P019 P020 --append-links
 
 human-eval-portal:
 	.venv/bin/python eval/human_eval/build_portal.py
