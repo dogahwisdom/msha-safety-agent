@@ -141,7 +141,7 @@ Four offline router failures occurred:
 
 ### 6.5 Human evaluation
 
-Blinded survey materials are generated from the Groq primary benchmark (`make human-eval-stimuli`). Each participant packet contains 12 stratified questions (four per category) with three blinded system answers each (36 ratings total). Ten participant packets (`P001`–`P010`) and empty response templates are under `eval/human_eval/generated/`. The Explanation Satisfaction Scale items follow Hoffman et al. (2023); see `eval/human_eval/materials.md` and `eval/human_eval/facilitator_guide.md`.
+Blinded survey materials are generated from the Groq primary benchmark (`make human-eval-stimuli`). Each participant packet contains 12 stratified questions (four per category) with three blinded system answers each (36 ratings total). Twenty counterbalanced participant packets (`P001`–`P020`) and empty response templates are under `eval/human_eval/generated/`. The Explanation Satisfaction Scale items follow Hoffman et al. (2023); see `eval/human_eval/materials.md` and `eval/human_eval/facilitator_guide.md`.
 
 **Participant ratings are not yet included.** Data collection at the University of Mines and Technology has **not started**. A blocking TODO in `eval/human_eval/materials.md` requires the researcher to confirm with their department or supervisor what ethics and consent steps are required before any session. Draft consent language is in `eval/human_eval/consent_form.md` and must be confirmed before use.
 

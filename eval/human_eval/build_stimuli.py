@@ -311,7 +311,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--participants",
         type=int,
-        default=10,
+        default=20,
         help="Number of participant packets to generate (different question order).",
     )
     parser.add_argument("--participant-prefix", default="P")

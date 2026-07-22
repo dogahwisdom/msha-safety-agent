@@ -21,7 +21,7 @@ Participants rate blinded answers from three systems (tool-augmented agent, clas
    make human-eval-stimuli
    ```
    Outputs land in `eval/human_eval/generated/`:
-   - `packets/P001_packet.md` ... participant-facing stimuli (10 default packets)
+   - `packets/P001_packet.md` ... participant-facing stimuli (20 default packets, `P001`–`P020`)
    - `response_templates/P001_responses.csv` ... empty rating sheets
    - `randomization_key.csv` ... researcher only; do not share with participants
 3. Present one question and one system answer at a time.

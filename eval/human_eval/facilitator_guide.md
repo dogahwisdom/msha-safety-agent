@@ -2,6 +2,8 @@
 
 **Do not collect data until UMaT ethics requirements are confirmed.** See the blocking TODO at the top of `materials.md` and the draft `consent_form.md`. Supervisor approval is required before any participant session.
 
+For online collection, use `eval/human_eval/generate_forms.py` (see `docs/REPRODUCTION.md`, Google Forms API setup) to create one anonymous Google Form per participant from the generated packets. Each form includes welcome text, embedded informed consent, rating instructions, then the blinded stimuli. Share the single-entry portal (`eval/human_eval/HOSTING.md`) instead of many form URLs.
+
 Use this guide when collecting Explanation Satisfaction Scale ratings in person or by survey.
 
 ## Before the session

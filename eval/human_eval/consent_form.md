@@ -6,9 +6,9 @@
 
 ## Plain-language consent paragraph (starting point)
 
-You are invited to take part in a research study about computer-generated answers to mine safety questions. The study is part of an undergraduate thesis and may lead to a published paper. Participation is **voluntary**. You may skip any question or stop at any time without penalty.
+You are invited to take part in a research study about system-generated explanations for mine safety questions. The study is conducted at the University of Mines and Technology (UMaT) and may be reported in academic publications. Participation is **voluntary**. You may skip any question or stop at any time without penalty.
 
-You will read short mine safety questions and one system answer at a time. After each answer, you will rate nine short statements on a 1 to 5 scale about how satisfying and useful the explanation is. There are **36 answer blocks** in total (about **45 to 60 minutes**). You may take a short break during the session.
+You will read mine safety questions and one system explanation at a time. After each explanation, you will rate nine Explanation Satisfaction Scale statements on a 1 to 5 scale. These systems include large language model-based and other automated baselines. There are **36 rating blocks** in total (about **45 to 60 minutes**). You may pause and return later if needed.
 
 Your responses will be recorded under a **pseudonymous participant ID** (for example, P001). We will not ask for your name on the rating form, but the researcher will know which ID was assigned to you for session management. Published results will report combined scores only, not individual identities.
 

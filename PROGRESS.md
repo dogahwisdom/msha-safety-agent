@@ -50,7 +50,7 @@ Overall differences (38.3% vs 30.0% vs 28.3%) are directional, not statistically
 ## Step 10. Human evaluation materials - COMPLETE (materials only)
 
 - `make human-eval-stimuli` generates blinded packets from Groq primary benchmark.
-- 10 participant packets, ESS scale, `score_responses.py` for post-collection aggregation.
+- 20 participant packets (`P001`–`P020`), ESS scale, `score_responses.py` for post-collection aggregation.
 - **No participant data collected.** Blocked on Item 1 (UMaT ethics).
 
 ---

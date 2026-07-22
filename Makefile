@@ -1,4 +1,4 @@
-.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq human-eval-stimuli significance-test paper help
+.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq human-eval-stimuli human-eval-oauth human-eval-forms human-eval-forms-all human-eval-forms-extended human-eval-portal significance-test paper help
 
 help:
 	@echo "MSHA Safety Agent — common targets"
@@ -10,6 +10,11 @@ help:
 	@echo "  make benchmark  Build benchmark questions (Step 7)"
 	@echo "  make eval-groq   Resumable Groq benchmark (Steps 8–9, primary result)"
 	@echo "  make human-eval-stimuli  Build blinded ESS survey packets (Step 10)"
+	@echo "  make human-eval-oauth   Authorize Google Forms API (one-time OAuth)"
+	@echo "  make human-eval-forms   Create Google Form(s) and participant portal"
+	@echo "  make human-eval-forms-all Generate P002-P010 forms and refresh portal"
+	@echo "  make human-eval-forms-extended Generate P011-P020 forms and refresh portal"
+	@echo "  make human-eval-portal  Rebuild participant portal from form_links.csv"
 	@echo "  make significance-test McNemar test on Groq benchmark (n=60)"
 	@echo "  make paper      Build LaTeX manuscript PDF + arXiv tarball"
 	@echo "  make notebook   Start JupyterLab in notebooks/"
@@ -50,7 +55,23 @@ eval-groq:
 		bash scripts/run_groq_benchmark.sh
 
 human-eval-stimuli:
-	.venv/bin/python eval/human_eval/build_stimuli.py --participants 10
+	.venv/bin/python eval/human_eval/build_stimuli.py --participants 20
+
+human-eval-oauth:
+	.venv/bin/python eval/human_eval/setup_oauth.py --open-console
+
+human-eval-forms:
+	.venv/bin/python eval/human_eval/generate_forms.py --participants P001
+
+human-eval-forms-all:
+	.venv/bin/python eval/human_eval/generate_forms.py --participants P002 P003 P004 P005 P006 P007 P008 P009 P010 --append-links
+
+human-eval-forms-extended:
+	.venv/bin/python eval/human_eval/generate_forms.py --participants P011 P012 P013 P014 P015 P016 P017 P018 P019 P020 --append-links
+	$(MAKE) human-eval-portal
+
+human-eval-portal:
+	.venv/bin/python eval/human_eval/build_portal.py
 
 significance-test:
 	.venv/bin/python eval/significance_test.py

@@ -20,6 +20,10 @@ build/
 .env.*
 !.env.example
 
+# Google Forms OAuth (human eval)
+eval/human_eval/credentials.json
+eval/human_eval/token.json
+
 # Local model / vector store artifacts
 *.bin
 *.pt

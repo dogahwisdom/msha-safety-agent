@@ -55,6 +55,8 @@ Run notebooks 01 through 06 in order. Each notebook calls the same modules as th
 | 8 | `python eval/run_benchmark.py` |
 | 9 | `python eval/score.py` |
 | 10 | `python eval/significance_test.py` |
+| 11 | `python eval/human_eval/generate_forms.py --participants P001` |
+| 12 | `python eval/human_eval/export_responses.py --participants P001` |
 
 Or use Make: `make ingest`, `make classifier`, `make index`, `make benchmark`, `make eval-groq`.
 
@@ -196,13 +198,67 @@ Generate blinded survey packets from the Groq primary benchmark:
 make human-eval-stimuli
 ```
 
-This writes 10 participant packets (12 questions each, 36 ratings per person) under `eval/human_eval/generated/`. **Do not simulate participant ratings in code.** After you collect real responses, score them with:
+This writes 20 participant packets (12 questions each, 36 ratings per person) under `eval/human_eval/generated/`. **Do not simulate participant ratings in code.** After you collect real responses, score them with:
 
 ```bash
 .venv/bin/python eval/human_eval/score_responses.py eval/human_eval/responses/*.csv
 ```
 
 **Primary Groq benchmark is complete.** Participant collection is **blocked** until UMaT ethics and consent requirements are confirmed (see `eval/human_eval/materials.md` and `consent_form.md`).
+
+### Google Forms API setup (online surveys)
+
+Use this path to turn generated packets into one Google Form per participant instead of static documents.
+
+1. Create a Google Cloud project at [console.cloud.google.com](https://console.cloud.google.com).
+2. Enable **Google Forms API** and **Google Drive API** for the project (APIs and Services > Library).
+3. Configure the OAuth consent screen (External or Internal per your institution).
+4. Create OAuth client credentials: **Desktop app**. Download the JSON file.
+5. Save the file as `eval/human_eval/credentials.json` (gitignored; never commit it).
+6. Install API client libraries:
+
+```bash
+pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
+```
+
+7. Generate blinded packets if needed: `make human-eval-stimuli`
+8. Create forms (test with P001 first):
+
+```bash
+python eval/human_eval/generate_forms.py --participants P001
+```
+
+On first run, a browser window opens for OAuth. A local `eval/human_eval/token.json` file is saved (also gitignored).
+
+Outputs (researcher only, under `eval/human_eval/generated/`):
+
+| File | Purpose |
+|------|---------|
+| `form_links.csv` | `participant_id`, `form_url` share links |
+| `participant_portal.html` | Single-entry landing page; participants enter P001-style codes |
+
+Share **`participant_portal.html`** (host on Google Sites, Netlify, or similar) instead of distributing many form URLs. See **`eval/human_eval/HOSTING.md`** for the full pre-flight checklist.
+
+Generate all participant forms:
+
+```bash
+make human-eval-forms       # P001 test form + portal
+make human-eval-forms-all        # append P002-P010
+make human-eval-forms-extended   # append P011-P020 and refresh portal
+make human-eval-portal      # rebuild portal only
+```
+| `form_registry.json` | Form IDs and question IDs for export (not shared with participants) |
+
+Forms are configured with **no email collection** and **no sign-in requirement**, consistent with `eval/human_eval/consent_form.md`.
+
+After responses arrive, export to CSV for scoring:
+
+```bash
+python eval/human_eval/export_responses.py --participants P001
+python eval/human_eval/score_responses.py eval/human_eval/responses/P001_completed.csv
+```
+
+Exported CSV columns match `response_templates/` (`participant_id`, `stimulus_id`, `question_id`, `category`, `ESS-1` through `ESS-9`, `comment`). Each row is keyed by `stimulus_id`, which ties back to the blinded system via `randomization_key.csv` when running `score_responses.py`.
 
 ## Troubleshooting
 
