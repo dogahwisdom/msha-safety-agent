@@ -156,6 +156,14 @@ All three systems attempt all 60 questions. The classifier baseline always calls
 
 Mean latency: agent 126 s, classifier 0.19 s, RAG 256 s. Total tokens: agent 69,650, RAG 38,252.
 
+**McNemar's test (paired per-question correctness, n=60).** Agent vs classifier baseline: McNemar χ²=2.29, p=0.131 (not significant at α=0.05). Agent vs RAG baseline: McNemar χ²=0.83, p=0.361 (not significant at α=0.05). Reproduce with:
+
+```bash
+python eval/significance_test.py
+```
+
+Output: `eval/results/significance_groq_fixed.json` (local, gitignored).
+
 ### Offline routing ablation (deterministic, no LLM)
 
 | System | Classification | Trend | Case grounded | Overall | Tool use |
@@ -193,7 +201,7 @@ This writes 10 participant packets (12 questions each, 36 ratings per person) un
 .venv/bin/python eval/human_eval/score_responses.py eval/human_eval/responses/*.csv
 ```
 
-**Primary Groq benchmark is complete.** Participant collection may proceed using the generated materials.
+**Primary Groq benchmark is complete.** Participant collection is **blocked** until UMaT ethics and consent requirements are confirmed (see `eval/human_eval/materials.md` and `consent_form.md`).
 
 ## Troubleshooting
 

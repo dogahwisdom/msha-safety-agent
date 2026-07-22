@@ -1,5 +1,7 @@
 # Human Evaluation Materials
 
+> **TODO (blocking: ethics and consent).** Do **not** begin data collection until the researcher has confirmed with their department or supervisor at the University of Mines and Technology what is required before collecting survey data from faculty and students for a thesis. At minimum, informed consent is needed; formal ethics clearance may also be required depending on department policy. The authors of this repository **cannot** confirm UMaT-specific requirements. Use the draft in `consent_form.md` only after a supervisor confirms it is sufficient. See `facilitator_guide.md` for the full workflow.
+
 Study protocol for rating blinded system outputs using the Explanation Satisfaction Scale (Hoffman et al., 2023).
 
 ## Study purpose

@@ -1,5 +1,7 @@
 # Facilitator Guide (Step 10)
 
+**Do not collect data until UMaT ethics requirements are confirmed.** See the blocking TODO at the top of `materials.md` and the draft `consent_form.md`. Supervisor approval is required before any participant session.
+
 Use this guide when collecting Explanation Satisfaction Scale ratings in person or by survey.
 
 ## Before the session

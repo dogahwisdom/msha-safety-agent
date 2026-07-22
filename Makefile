@@ -1,4 +1,4 @@
-.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq human-eval-stimuli paper help
+.PHONY: setup ingest test test-all notebook classifier index benchmark eval eval-offline eval-groq human-eval-stimuli significance-test paper help
 
 help:
 	@echo "MSHA Safety Agent — common targets"
@@ -10,6 +10,7 @@ help:
 	@echo "  make benchmark  Build benchmark questions (Step 7)"
 	@echo "  make eval-groq   Resumable Groq benchmark (Steps 8–9, primary result)"
 	@echo "  make human-eval-stimuli  Build blinded ESS survey packets (Step 10)"
+	@echo "  make significance-test McNemar test on Groq benchmark (n=60)"
 	@echo "  make paper      Build LaTeX manuscript PDF + arXiv tarball"
 	@echo "  make notebook   Start JupyterLab in notebooks/"
 
@@ -50,6 +51,9 @@ eval-groq:
 
 human-eval-stimuli:
 	.venv/bin/python eval/human_eval/build_stimuli.py --participants 10
+
+significance-test:
+	.venv/bin/python eval/significance_test.py
 
 notebook:
 	.venv/bin/jupyter lab notebooks/
