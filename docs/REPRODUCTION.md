@@ -54,6 +54,7 @@ Run notebooks 01 through 06 in order. Each notebook calls the same modules as th
 | 7 | `python benchmark/build_benchmark.py` |
 | 8 | `python eval/run_benchmark.py` |
 | 9 | `python eval/score.py` |
+| 10 | `python eval/significance_test.py` |
 
 Or use Make: `make ingest`, `make classifier`, `make index`, `make benchmark`, `make eval-groq`.
 
@@ -156,13 +157,13 @@ All three systems attempt all 60 questions. The classifier baseline always calls
 
 Mean latency: agent 126 s, classifier 0.19 s, RAG 256 s. Total tokens: agent 69,650, RAG 38,252.
 
-**McNemar's test (paired per-question correctness, n=60).** Agent vs classifier baseline: McNemar χ²=2.29, p=0.131 (not significant at α=0.05). Agent vs RAG baseline: McNemar χ²=0.83, p=0.361 (not significant at α=0.05). Reproduce with:
+**McNemar exact test (paired per-question correctness, n=60).** Agent versus classifier baseline: 7 discordant pairs (6 in the agent's favor, 1 in the classifier's), exact p = 0.125 (not significant at alpha = 0.05). Agent versus RAG baseline: 30 discordant pairs (18 in the agent's favor, 12 in the RAG baseline's), exact p = 0.362 (not significant at alpha = 0.05). At n = 60, the observed accuracy gaps should be read as suggestive rather than confirmed differences between systems. Reproduce with:
 
 ```bash
 python eval/significance_test.py
 ```
 
-Output: `eval/results/significance_groq_fixed.json` (local, gitignored).
+Requires `eval/results/scores_groq_fixed.json` from step 9. Output: `eval/results/significance_groq_fixed.json` (local, gitignored).
 
 ### Offline routing ablation (deterministic, no LLM)
 

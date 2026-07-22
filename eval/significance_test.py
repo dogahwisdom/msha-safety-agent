@@ -1,4 +1,4 @@
-"""McNemar's test on paired per-question benchmark correctness (Groq primary run)."""
+"""McNemar's exact test on paired per-question benchmark correctness (Groq primary run)."""
 
 from __future__ import annotations
 
@@ -13,128 +13,129 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from eval.score import REFERENCES_PATH, _score_row  # noqa: E402
-
+DEFAULT_SCORES = Path(__file__).resolve().parent / "results" / "scores_groq_fixed.json"
 DEFAULT_OUTPUT = Path(__file__).resolve().parent / "results" / "significance_groq_fixed.json"
 
 
-def _load_correctness(benchmark_path: Path) -> dict[str, dict[str, bool]]:
-    payload = json.loads(benchmark_path.read_text(encoding="utf-8"))
-    references = json.loads(REFERENCES_PATH.read_text(encoding="utf-8"))
-    by_question: dict[str, dict[str, bool]] = {}
-    for row in payload["results"]:
-        qid = row["question_id"]
+def load_correctness_by_system(scores_path: Path) -> dict[str, dict[str, bool]]:
+    """Load {system: {question_id: correct}} from scored benchmark rows."""
+    payload = json.loads(scores_path.read_text(encoding="utf-8"))
+    rows = payload["rows"]
+    by_system: dict[str, dict[str, bool]] = {}
+    for row in rows:
         system = row["system"]
-        ref = references[qid]
-        score = _score_row(row, ref)
-        by_question.setdefault(qid, {})[system] = bool(score["correct"])
-    return by_question
+        qid = row["question_id"]
+        by_system.setdefault(system, {})[qid] = bool(row["correct"])
+    return by_system
 
 
-def _mcnemar(system_a: dict[str, bool], system_b: dict[str, bool]) -> dict[str, Any]:
-    """Compare system_a vs system_b on the same question ids."""
-    question_ids = sorted(set(system_a) & set(system_b))
-    if len(question_ids) != 60:
-        raise ValueError(f"Expected 60 paired questions, found {len(question_ids)}")
+def mcnemar_exact(correct_a: dict[str, bool], correct_b: dict[str, bool], label: str) -> dict[str, Any]:
+    from scipy.stats import binomtest
 
-    both_correct = both_wrong = 0
-    a_wrong_b_right = 0
-    a_right_b_wrong = 0
-    for qid in question_ids:
-        a_ok = system_a[qid]
-        b_ok = system_b[qid]
-        if a_ok and b_ok:
-            both_correct += 1
-        elif not a_ok and not b_ok:
-            both_wrong += 1
+    shared_ids = sorted(set(correct_a) & set(correct_b))
+    b = c = both_right = both_wrong = 0
+    for qid in shared_ids:
+        a_ok, b_ok = correct_a[qid], correct_b[qid]
+        if a_ok and not b_ok:
+            b += 1
         elif not a_ok and b_ok:
-            a_wrong_b_right += 1
-        elif a_ok and not b_ok:
-            a_right_b_wrong += 1
+            c += 1
+        elif a_ok and b_ok:
+            both_right += 1
+        else:
+            both_wrong += 1
 
-    discordant = a_wrong_b_right + a_right_b_wrong
+    n = len(shared_ids)
+    discordant = b + c
+    a_correct = sum(correct_a[qid] for qid in shared_ids)
+    b_correct = sum(correct_b[qid] for qid in shared_ids)
+
+    print(f"\n{label}")
+    print(f"  n={n}, both right={both_right}, both wrong={both_wrong}")
+    print(f"  discordant: A-right/B-wrong={b}, A-wrong/B-right={c}, total={discordant}")
+    print(f"  A correct={a_correct}/{n} ({100 * a_correct / n:.1f}%), B correct={b_correct}/{n} ({100 * b_correct / n:.1f}%)")
+
     if discordant == 0:
-        statistic = 0.0
+        print("  No discordant pairs, systems agree on every question.")
         p_value = 1.0
     else:
-        try:
-            from scipy.stats import chi2
-        except ImportError as exc:
-            raise ImportError("scipy is required for McNemar p-values") from exc
-        statistic = (abs(a_wrong_b_right - a_right_b_wrong) - 1) ** 2 / discordant
-        p_value = float(chi2.sf(statistic, df=1))
+        p_value = float(binomtest(min(b, c), discordant, 0.5, alternative="two-sided").pvalue)
+        print(f"  Exact McNemar p-value: {p_value:.4f}")
+        print("  Significant at alpha=0.05" if p_value < 0.05 else "  NOT significant at alpha=0.05")
 
-    n = len(question_ids)
-    a_correct = sum(system_a[q] for q in question_ids)
-    b_correct = sum(system_b[q] for q in question_ids)
     return {
+        "label": label,
         "n_questions": n,
-        "system_a_correct": a_correct,
-        "system_a_accuracy": round(a_correct / n, 4),
-        "system_b_correct": b_correct,
-        "system_b_accuracy": round(b_correct / n, 4),
-        "both_correct": both_correct,
+        "both_correct": both_right,
         "both_wrong": both_wrong,
-        "a_wrong_b_right": a_wrong_b_right,
-        "a_right_b_wrong": a_right_b_wrong,
-        "mcnemar_statistic": round(statistic, 4),
-        "p_value": round(p_value, 4),
+        "a_right_b_wrong": b,
+        "a_wrong_b_right": c,
+        "discordant": discordant,
+        "system_a_correct": a_correct,
+        "system_a_accuracy": round(a_correct / n, 4) if n else 0.0,
+        "system_b_correct": b_correct,
+        "system_b_accuracy": round(b_correct / n, 4) if n else 0.0,
+        "exact_mcnemar_p_value": round(p_value, 4),
         "significant_at_0_05": p_value < 0.05,
     }
 
 
-def run_significance_tests(benchmark_path: Path) -> dict[str, Any]:
-    by_question = _load_correctness(benchmark_path)
-    agent = {qid: systems["agent"] for qid, systems in by_question.items() if "agent" in systems}
-    classifier = {
-        qid: systems["classifier_baseline"]
-        for qid, systems in by_question.items()
-        if "classifier_baseline" in systems
-    }
-    rag = {qid: systems["rag_baseline"] for qid, systems in by_question.items() if "rag_baseline" in systems}
+def run_significance_tests(scores_path: Path) -> dict[str, Any]:
+    by_system = load_correctness_by_system(scores_path)
+    agent = by_system["agent"]
+    classifier = by_system["classifier_baseline"]
+    rag = by_system["rag_baseline"]
+
+    print(f"Scores file: {scores_path}")
+    print(f"Systems loaded: {sorted(by_system)}")
 
     comparisons = {
-        "agent_vs_classifier_baseline": _mcnemar(agent, classifier),
-        "agent_vs_rag_baseline": _mcnemar(agent, rag),
+        "agent_vs_classifier_baseline": mcnemar_exact(
+            agent, classifier, "Agent vs classifier baseline"
+        ),
+        "agent_vs_rag_baseline": mcnemar_exact(agent, rag, "Agent vs RAG baseline"),
     }
     return {
-        "benchmark_path": str(benchmark_path),
-        "test": "mcnemar",
+        "scores_path": str(scores_path),
+        "test": "mcnemar_exact",
         "alpha": 0.05,
         "comparisons": comparisons,
     }
 
 
-def _default_benchmark_path() -> Path:
-    name = os.environ.get("BENCHMARK_OUTPUT", "benchmark_runs_groq_fixed.json")
+def _default_scores_path() -> Path:
+    name = os.environ.get("SCORES_OUTPUT", "scores_groq_fixed.json")
     return Path(__file__).resolve().parent / "results" / name
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--benchmark",
+        "--scores",
         type=Path,
         default=None,
-        help="Benchmark JSON (default: eval/results/benchmark_runs_groq_fixed.json).",
+        help="Scored benchmark JSON with per-row 'correct' field (default: scores_groq_fixed.json).",
     )
     parser.add_argument(
         "--out",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help="Where to write JSON results.",
+        help="Where to write JSON summary.",
     )
+    parser.add_argument("--quiet-json", action="store_true", help="Skip writing JSON output.")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    benchmark_path = args.benchmark or _default_benchmark_path()
-    results = run_significance_tests(benchmark_path)
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(results, indent=2), encoding="utf-8")
-    print(json.dumps(results, indent=2))
-    print(f"Wrote {args.out}")
+    scores_path = args.scores or _default_scores_path()
+    if not scores_path.exists():
+        raise FileNotFoundError(f"Scores file not found: {scores_path}. Run eval/score.py first.")
+    results = run_significance_tests(scores_path)
+    if not args.quiet_json:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(results, indent=2), encoding="utf-8")
+        print(f"\nWrote {args.out}")
 
 
 if __name__ == "__main__":

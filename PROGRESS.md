@@ -20,23 +20,21 @@ Three items must be complete before human data collection or paper submission. H
 
 ---
 
-### Item 2. Statistical caution (McNemar's test) - DONE
+### Item 2. Statistical caution (McNemar exact test) - DONE
 
 **What changed:**
-- Added `eval/significance_test.py` (McNemar's test, continuity correction, scipy chi-square p-values).
+- `eval/significance_test.py` uses McNemar's exact test (`scipy.stats.binomtest`) on `eval/results/scores_groq_fixed.json`.
 - Added `tests/test_significance.py` (3 passed).
-- Added `make significance-test` target.
-- Ran on local Groq benchmark; results in `eval/results/significance_groq_fixed.json` (gitignored).
-- Updated `docs/paper_draft.md` §6.2 with test statistics and plain-language interpretation.
-- Updated `docs/REPRODUCTION.md` with reproduction command.
+- Added `make significance-test` target and Path B step 10 in `docs/REPRODUCTION.md`.
+- Updated `docs/paper_draft.md` Abstract, Section 6.2, and Section 7 Limitations with exact test language and real p-values.
 
-**Results (n=60 paired questions):**
-| Comparison | Agent correct | Baseline correct | McNemar χ² | p-value | Significant at α=0.05? |
-|------------|---------------|------------------|------------|---------|------------------------|
-| Agent vs classifier | 23 | 18 | 2.29 | 0.131 | No |
-| Agent vs RAG | 23 | 17 | 0.83 | 0.361 | No |
+**Results (n=60 paired questions, McNemar exact test on Groq scores):**
+| Comparison | Discordant pairs | Agent-favor / Baseline-favor | Exact p-value | Significant at alpha=0.05? |
+|------------|------------------|------------------------------|---------------|----------------------------|
+| Agent vs classifier | 7 | 6 / 1 | 0.125 | No |
+| Agent vs RAG | 30 | 18 / 12 | 0.362 | No |
 
-Overall differences (38.3% vs 30.0% vs 28.3%) are **suggestive, not statistically conclusive** at this sample size.
+Overall differences (38.3% vs 30.0% vs 28.3%) are directional, not statistically confirmed at n = 60.
 
 ---
 
