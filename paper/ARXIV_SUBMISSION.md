@@ -47,10 +47,9 @@ pdflatex -interaction=nonstopmode main.tex
 
 ## Integrity checklist (pre-submit)
 
-- [x] Benchmark numbers match offline evaluation (93.3% overall, 100% tool selection)
-- [x] Classifier holdout metrics match trained model evaluation (0.574 acc, 0.562 macro F1)
-- [x] Ollama supplementary numbers reported separately (Section 6.5), not as primary claims
-- [x] Incomplete Groq runs are not included as paper results
+- [x] Benchmark numbers: primary Groq agent 38.3% vs corrected baselines 30.0% / 28.3%
+- [x] Offline 93.3% labeled as ablation only, not primary claim
+- [x] Baselines attempt all 60 questions (methodology correction documented)
 - [x] Bibliography entries are real papers with DOI/arXiv where available
 - [x] No em dashes in manuscript source
 - [x] Traxia-style professional article layout (geometry, natbib, hyperref)
